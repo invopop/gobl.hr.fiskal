@@ -30,9 +30,9 @@ jobs:
       - name: Test
         run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
 
-      # The receipt requests and the expected receipts against
+      # The invoice requests and the expected invoices against
       # FiskalizacijaSchema.xsd, with xmllint run in a container.
-      - name: Receipt schema
+      - name: Invoice fiscalization schema
         run: go test ./racun/ -xsd
 
       - name: Coverage summary
