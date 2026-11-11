@@ -269,6 +269,15 @@ func TestErrors(t *testing.T) {
 		require.ErrorIs(t, err, ErrUnsupported)
 		assert.ErrorContains(t, err, "Povratna naknada")
 	})
+	for _, c := range eracunPassThroughTaxCategories {
+		t.Run("HR tax category "+c.String(), func(t *testing.T) {
+			exempt := tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt, Ext: tax.ExtensionsOf(cbc.CodeMap{extKeyEracunTaxCategory: c})}}
+			inv := withCharges(t, []*bill.Charge{{Amount: num.MakeAmount(30, 2), Reason: "Fee", Taxes: exempt}}, nil)
+			_, err := FromInvoice(inv, testOptions(), key)
+			require.ErrorIs(t, err, ErrUnsupported)
+			assert.ErrorContains(t, err, `HR tax category "`+c.String()+`"`)
+		})
+	}
 	t.Run("a discount without taxes", func(t *testing.T) {
 		inv := withCharges(t, nil, []*bill.Discount{{Amount: num.MakeAmount(10, 2), Reason: "Promo"}})
 		_, err := FromInvoice(inv, testOptions(), key)
