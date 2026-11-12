@@ -55,7 +55,6 @@ normal:
 
 ```go
 import (
-	"github.com/invopop/gobl"
 	_ "github.com/invopop/gobl.hr.fiskal/addon/fiskal"
 )
 ```
