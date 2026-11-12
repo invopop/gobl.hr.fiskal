@@ -40,8 +40,8 @@ import (
 var (
 	// ErrNotInvoice is an envelope that holds no invoice.
 	ErrNotInvoice = errors.New("envelope does not hold an invoice")
-	// ErrMissing is an invoice without the addon or the code the
-	// conversion requires.
+	// ErrMissing is an invoice without the addon, the code or the issue
+	// time the conversion requires.
 	ErrMissing = errors.New("missing what fiscalization requires")
 	// ErrInvalid is a value fiscalization can't take, such as an amount
 	// that can't be converted to euros.
@@ -130,8 +130,9 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 
 // checkInvoice refuses an input that breaks the contract of the conversion
 // in a way the addon rules can't see: an invoice without the addon, whose
-// rules then never ran, or without a code, which the rules allow so that a
-// draft can be validated before it is numbered.
+// rules then never ran, or without a code or an issue time, which the rules
+// allow so that a draft can be validated before it is numbered and before
+// the fiscalization step sets its issue time.
 func checkInvoice(inv *bill.Invoice) error {
 	switch {
 	case inv == nil:
@@ -140,6 +141,8 @@ func checkInvoice(inv *bill.Invoice) error {
 		return fmt.Errorf("addon %s %w", fiskal.V1, ErrMissing)
 	case inv.Code == cbc.CodeEmpty:
 		return fmt.Errorf("invoice code %w: number the invoice first", ErrMissing)
+	case inv.IssueTime == nil:
+		return fmt.Errorf("invoice issue time %w: set the issue date and time first", ErrMissing)
 	}
 	return nil
 }

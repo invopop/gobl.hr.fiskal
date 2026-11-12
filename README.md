@@ -106,9 +106,14 @@ never numbers two premises or two devices.
 
 ## Issue date and time
 
-The invoice must have its `issue_date` and `issue_time`, in Croatian time.
-CIS receives both (`DatVrijeme`), and the issue time goes into the ZKI. The
-addon does not fill in a missing time with the current time. A normalizer
+The `issue_date` and `issue_time` are in Croatian time. CIS receives both
+(`DatVrijeme`), and the issue time goes into the ZKI. The `issue_time` is not
+required: an invoice can arrive without it, and the fiscalization step then
+sets the issue date and time to the moment it fiscalizes the invoice, before
+it computes the ZKI. A client that sets the time itself, such as a till that
+records the time of the sale, keeps it.
+
+The addon does not fill in a missing time with the current time. A normalizer
 runs on every calculation, so it would use the time when a draft was first
 calculated, not the time when the invoice was issued.
 
