@@ -96,9 +96,9 @@ func newAddon() *tax.AddonDef {
 				it is fiscalized. Its printed invoice must also show the amounts
 				in euros (Art. 81 of the VAT Act).
 
-				An invoice with no issue time, dated today or not dated at all, is
-				given the current date and time in Croatia. Fiscalization needs the
-				issue time, as it goes into the ZKI (the issuer's protection code).
+				The invoice must have its issue date and time, in Croatian time:
+				the issue time goes into the ZKI (the issuer's protection code).
+				The addon does not fill in a missing time.
 
 				Once fiscalized, the invoice is stamped with the ZKI, the JIR and the
 				URL of the QR code to print.

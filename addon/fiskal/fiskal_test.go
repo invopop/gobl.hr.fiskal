@@ -127,23 +127,27 @@ func TestSmallTaxpayer(t *testing.T) {
 	})
 }
 
-func TestNormalizeIssueTime(t *testing.T) {
-	loc := tax.RegimeDefFor(l10n.HR).TimeLocation()
+func TestIssueTimeRequired(t *testing.T) {
+	t.Run("dated today without a time", func(t *testing.T) {
+		inv := testInvoice()
+		inv.IssueDate = cal.TodayIn(tax.RegimeDefFor(l10n.HR).TimeLocation())
+		inv.IssueTime = nil
+		assertFault(t, inv, faultCode("02"))
+		assert.Nil(t, inv.IssueTime, "the addon must not fill in the time")
+	})
 
-	t.Run("no date and no time", func(t *testing.T) {
+	t.Run("not dated and without a time", func(t *testing.T) {
 		inv := testInvoice()
 		inv.IssueDate = cal.Date{}
 		inv.IssueTime = nil
-		require.NoError(t, inv.Calculate())
-		require.NotNil(t, inv.IssueTime)
-		assert.Equal(t, cal.TodayIn(loc), inv.IssueDate)
-		require.NoError(t, rules.Validate(inv))
+		assertFault(t, inv, faultCode("02"))
 	})
 
-	t.Run("another day without a time", func(t *testing.T) {
+	t.Run("at midnight", func(t *testing.T) {
 		inv := testInvoice()
-		inv.IssueTime = nil
-		assertFault(t, inv, faultCode("02"))
+		inv.IssueTime = cal.NewTime(0, 0, 0)
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
 	})
 }
 

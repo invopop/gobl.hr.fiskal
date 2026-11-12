@@ -99,6 +99,14 @@ The number can come from two places:
 The rules refuse a series that does not match the labels, so that a counter
 never numbers two premises or two devices.
 
+## Issue date and time
+
+The invoice must have its `issue_date` and `issue_time`, in Croatian time.
+CIS receives both (`DatVrijeme`), and the issue time goes into the ZKI. The
+addon does not fill in a missing time with the current time. A normalizer
+runs on every calculation, so it would use the time when a draft was first
+calculated, not the time when the invoice was issued.
+
 ## Operator
 
 The operator is the person who issued the invoice: the person at the till,

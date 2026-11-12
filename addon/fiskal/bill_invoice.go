@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/invopop/gobl/bill"
-	"github.com/invopop/gobl/cal"
 	"github.com/invopop/gobl/cbc"
 	"github.com/invopop/gobl/currency"
 	"github.com/invopop/gobl/l10n"
@@ -50,7 +49,6 @@ func normalizeInvoice(inv *bill.Invoice) {
 	if inv == nil {
 		return
 	}
-	normalizeIssueTime(inv)
 	inv.Code = normalizeCode(inv.Code)
 	if inv.Tax == nil {
 		inv.Tax = new(bill.Tax)
@@ -111,24 +109,6 @@ func Series(ext tax.Extensions) cbc.Code {
 	return premises + "/" + device
 }
 
-// normalizeIssueTime sets the issue time fiscalization needs to the current
-// time in Croatia when the invoice is issued now: it has no issue time, and
-// its issue date is empty or today. The issue date is set from the same
-// moment. GOBL fills in only the date. An invoice dated another day keeps its
-// empty time, which the rules then ask for.
-func normalizeIssueTime(inv *bill.Invoice) {
-	if inv.IssueTime != nil {
-		return
-	}
-	now := cal.ThisSecondIn(tax.RegimeDefFor(l10n.HR).TimeLocation())
-	if !inv.IssueDate.IsZero() && inv.IssueDate != now.Date() {
-		return
-	}
-	t := now.Time()
-	inv.IssueDate = now.Date()
-	inv.IssueTime = &t
-}
-
 // -- Rule set -------------------------------------------------------------
 
 func billInvoiceRules() *rules.Set {
@@ -143,8 +123,12 @@ func billInvoiceRules() *rules.Set {
 		rules.Assert("17", "invoice series must match the numbering scope: the premises label for scope P, or <premises>/<device> for scope N, so that each counter numbers one premises or one device (OznSlijed)",
 			is.Func("series matches the numbering scope", seriesMatchesScope),
 		),
+		// The addon does not fill in a missing issue time with the current
+		// time: the invoice must arrive with it. A normalizer runs on every
+		// calculation, so it would take the time a draft is first
+		// calculated, not the time the invoice is issued.
 		rules.Field("issue_time",
-			rules.Assert("02", "invoice issue time is required for an invoice not dated today in Croatia (DatVrijeme)", is.Present),
+			rules.Assert("02", "invoice issue time is required: it goes into the ZKI (DatVrijeme)", is.Present),
 		),
 		// CIS receives the amounts in euros (spec v2.7, p. 10), but the VAT Act
 		// (Art. 81) lets an invoice show them in another currency too. The
