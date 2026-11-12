@@ -81,7 +81,7 @@ The supplier party carries one more:
 
 | Key | Description |
 | --- | --- |
-| `hr-fiskal-vat-system` | Whether the supplier is in the VAT system (`USustPdv`): `Y` (the default) or `N`. A small taxpayer, exempt from VAT under Art. 90(1) of the VAT Act, is outside it: its lines use the VAT key `exempt`, and the addon adds a note citing the exemption, as Art. 79(3) requires. `racun` sends CIS only the total of such an invoice, with no VAT breakdown: CIS checks the breakdown only for an issuer in the VAT system. |
+| `hr-fiskal-vat-system` | Whether the supplier is in the VAT system (`USustPdv`): `Y` (the default) or `N`. A small taxpayer, exempt from VAT under Art. 90(1) of the VAT Act, is outside it: its lines use the VAT key `exempt`, and the addon adds a note citing the exemption to an invoice with exempt VAT, as Art. 79(3) requires. A supply outside the scope of VAT uses the key `outside-scope` and gets no note. `racun` sends CIS only the total of such an invoice, with no VAT breakdown: CIS checks the breakdown only for an issuer in the VAT system. |
 
 The invoice code is the bare sequential number (`BrOznRac`): digits with no
 leading zero. A printed invoice shows the number as

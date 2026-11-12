@@ -121,6 +121,21 @@ func TestSmallTaxpayer(t *testing.T) {
 		require.Len(t, inv.Tax.Notes, 1)
 		assert.Equal(t, "Oslobođeno PDV-a", inv.Tax.Notes[0].Text)
 	})
+	t.Run("an outside-scope line, without the note", func(t *testing.T) {
+		inv := smallTaxpayer()
+		inv.Lines[0].Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyOutsideScope}
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
+		assert.Empty(t, inv.Tax.Notes)
+	})
+	t.Run("an exempt charge, with the note", func(t *testing.T) {
+		inv := smallTaxpayer()
+		inv.Lines[0].Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyOutsideScope}
+		inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(100, 2), Reason: "Dostava", Taxes: tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt}}}}
+		require.NoError(t, inv.Calculate())
+		require.Len(t, inv.Tax.Notes, 1)
+		assert.Equal(t, fiskal.NoteSmallTaxpayer, inv.Tax.Notes[0].Text)
+	})
 	t.Run("a line with VAT", func(t *testing.T) {
 		inv := smallTaxpayer()
 		inv.Lines[0].Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Rate: tax.RateGeneral}

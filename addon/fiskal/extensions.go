@@ -116,8 +116,9 @@ var extensions = []*cbc.Definition{
 				obveznik), with a domestic turnover up to EUR 60,000, is exempt from
 				VAT under Art. 90(1) of the VAT Act and outside the VAT system: it
 				must not show VAT on its invoices (Art. 90.g). Its lines use the VAT
-				key exempt, and the invoice gets a note citing the exemption
-				(Art. 79(3)).
+				key exempt, and an invoice with exempt VAT gets a note citing the
+				exemption (Art. 79(3)). A supply outside the scope of VAT uses the
+				key outside-scope and gets no note.
 			`),
 		},
 		Values: []*cbc.Definition{

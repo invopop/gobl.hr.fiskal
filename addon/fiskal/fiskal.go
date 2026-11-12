@@ -85,7 +85,9 @@ func newAddon() *tax.AddonDef {
 				A supplier outside the VAT system, such as a small taxpayer under
 				Art. 90(1) of the VAT Act, sets hr-fiskal-vat-system to N in its own
 				extensions. It must not charge VAT: its lines use the VAT key exempt,
-				and the invoice gets a note citing the exemption. CIS receives only
+				and an invoice with exempt VAT gets a note citing the exemption. A
+				supply outside the scope of VAT uses the key outside-scope, with no
+				note. CIS receives only
 				the total of its invoices, with no VAT breakdown.
 
 				An invoice from the bound paper invoice book, entered after the till
