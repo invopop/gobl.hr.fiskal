@@ -98,9 +98,11 @@ func newAddon() *tax.AddonDef {
 				it is fiscalized. Its printed invoice must also show the amounts
 				in euros (Art. 81 of the VAT Act).
 
-				The invoice must have its issue date and time, in Croatian time:
-				the issue time goes into the ZKI (the issuer's protection code).
-				The addon does not fill in a missing time.
+				The issue date and time are in Croatian time, and the issue time
+				goes into the ZKI (the issuer's protection code). An invoice can
+				arrive without a time: the fiscalization step then sets the issue
+				date and time to the moment it fiscalizes the invoice. The addon
+				does not fill in a missing time.
 
 				Once fiscalized, the invoice is stamped with the ZKI, the JIR and the
 				URL of the QR code to print.

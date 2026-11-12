@@ -127,13 +127,12 @@ func billInvoiceRules() *rules.Set {
 		rules.Assert("17", "invoice series must match the numbering scope: the premises label for scope P, or <premises>/<device> for scope N, so that each counter numbers one premises or one device (OznSlijed)",
 			is.Func("series matches the numbering scope", seriesMatchesScope),
 		),
-		// The addon does not fill in a missing issue time with the current
-		// time: the invoice must arrive with it. A normalizer runs on every
-		// calculation, so it would take the time a draft is first
-		// calculated, not the time the invoice is issued.
-		rules.Field("issue_time",
-			rules.Assert("02", "invoice issue time is required: it goes into the ZKI (DatVrijeme)", is.Present),
-		),
+		// The issue time is not required: a draft can arrive without it, and
+		// the fiscalization step sets the issue date and time to the moment
+		// it fiscalizes the invoice, before it computes the ZKI. The addon
+		// does not fill it in: a normalizer runs on every calculation, so it
+		// would take the time a draft is first calculated, not the time the
+		// invoice is issued.
 		// CIS receives the amounts in euros (spec v2.7, p. 10), but the VAT Act
 		// (Art. 81) lets an invoice show them in another currency too. The
 		// racun conversion converts the invoice with its exchange rate.
