@@ -8,6 +8,7 @@ import (
 	"github.com/invopop/gobl/cal"
 	"github.com/invopop/gobl/cbc"
 	"github.com/invopop/gobl/currency"
+	"github.com/invopop/gobl/i18n"
 	"github.com/invopop/gobl/l10n"
 	"github.com/invopop/gobl/num"
 	"github.com/invopop/gobl/org"
@@ -328,4 +329,19 @@ func TestVATPercent(t *testing.T) {
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
 	})
+}
+
+// eracunStandIn registers an addon with the eRačun key, as this module does
+// not import gobl.hr.eracun. GOBL refuses an invoice with an addon it does
+// not know.
+var eracunStandIn = func() cbc.Key {
+	k := cbc.Key("hr-eracun-v1")
+	tax.RegisterAddonDef(&tax.AddonDef{Key: k, Name: i18n.NewString("Croatia eRačun (stand-in)")})
+	return k
+}()
+
+func TestNotAnEracun(t *testing.T) {
+	inv := testInvoice()
+	inv.Addons = tax.WithAddons(fiskal.V1, eracunStandIn)
+	assertFault(t, inv, faultCode("24"))
 }

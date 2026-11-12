@@ -21,6 +21,10 @@ import (
 // with no leading zero (BrOznRac).
 var sequentialPattern = regexp.MustCompile(`^[1-9][0-9]{0,19}$`)
 
+// eracunV1 is the key of the Croatian eRačun addon (gobl.hr.eracun), for
+// B2B invoices. This module does not import it, so the key is repeated here.
+const eracunV1 cbc.Key = "hr-eracun-v1"
+
 // PersonKeyOperator marks the supplier person who issued the invoice, the
 // operator. Exactly one supplier person has it. The hr-eracun-v1 addon
 // uses the same key.
@@ -238,6 +242,11 @@ func billInvoiceRules() *rules.Set {
 				),
 			),
 		),
+		// A sale fiscalized as a receipt cannot also be issued and fiscalized
+		// as an eRačun (Art. 39(2) of the Fiscalization Act).
+		rules.Assert("24", fmt.Sprintf("invoice must not use the %s addon: a sale fiscalized as a receipt cannot also be an eRačun (Art. 39(2) of the Fiscalization Act)", eracunV1),
+			is.Func("not an eRačun", notEracun),
+		),
 		rules.Field("lines",
 			rules.Each(
 				rules.Field("taxes",
@@ -331,6 +340,11 @@ func seriesMatchesScope(val any) bool {
 		return true
 	}
 	return inv.Series == Series(inv.Tax.Ext)
+}
+
+func notEracun(val any) bool {
+	inv, ok := val.(*bill.Invoice)
+	return !ok || inv == nil || !eracunV1.In(inv.GetAddons()...)
 }
 
 func outsideVATSystem(val any) bool {

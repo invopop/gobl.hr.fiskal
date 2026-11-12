@@ -33,15 +33,6 @@ import (
 	"github.com/invopop/gobl.hr.fiskal/addon/fiskal"
 )
 
-// The hr-eracun-v1 addon (github.com/invopop/gobl.hr.eracun) records a
-// consumption tax (PP), a packaging return fee (POVNAK), the motor vehicle
-// tax (PPMV) or another untaxed fee (N) as exempt VAT, with the HR tax
-// category in this extension. This module does not import that addon, so
-// the key and the codes are repeated here.
-const extKeyEracunTaxCategory cbc.Key = "hr-eracun-tax-category"
-
-var eracunPassThroughTaxCategories = []cbc.Code{"POVNAK", "PP", "PPMV", "N"}
-
 // Errors the conversion returns, wrapped with the field they are about.
 var (
 	// ErrNotInvoice is an envelope that holds no invoice.
@@ -280,14 +271,6 @@ func addTaxes(r *Invoice, inv *bill.Invoice) error {
 			return fmt.Errorf("tax category %q %w", cat.Code, ErrUnsupported)
 		}
 		for _, rate := range cat.Rates {
-			// The eRačun addon records a consumption tax (PP), a packaging
-			// return fee (POVNAK), the motor vehicle tax (PPMV) or another
-			// untaxed fee (N) as exempt VAT with its HR tax category. They
-			// belong in Pnp, Naknade or OstaliPor, not IznosOslobPdv,
-			// which is not supported yet.
-			if c := rate.Ext.Get(extKeyEracunTaxCategory); c.In(eracunPassThroughTaxCategories...) {
-				return fmt.Errorf("HR tax category %q %w", c, ErrUnsupported)
-			}
 			switch {
 			case rate.Key.In(tax.KeyExempt, tax.KeyExport):
 				exempt = exempt.Add(rate.Base)

@@ -114,6 +114,10 @@ func newAddon() *tax.AddonDef {
 				with no VAT to charge uses the VAT key exempt or outside-scope.
 				A VAT rate other than 0, 5, 13 or 25 % is refused too, as CIS
 				refuses it.
+
+				A sale fiscalized as a receipt cannot also be issued and
+				fiscalized as an eRačun (Art. 39(2) of the Fiscalization Act), so
+				an invoice that also uses the hr-eracun-v1 addon is refused.
 			`),
 		},
 		Sources: []*cbc.Source{

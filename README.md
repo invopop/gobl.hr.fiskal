@@ -21,7 +21,10 @@ receipt. The module provides the GOBL addon `hr-fiskal-b2c-v1` in
 
 The Croatian tax regime itself (`regimes/hr`) lives in GOBL core. The
 Croatian eRačun, the e-invoice businesses exchange under Fiscalization 2.0,
-lives in [gobl.hr.eracun](https://github.com/invopop/gobl.hr.eracun).
+lives in [gobl.hr.eracun](https://github.com/invopop/gobl.hr.eracun). A sale
+fiscalized as a receipt cannot also be an eRačun (Art. 39(2) of the
+Fiscalization Act), so the addon refuses an invoice that also uses
+`hr-eracun-v1`.
 
 ## Layout
 
