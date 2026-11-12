@@ -293,6 +293,11 @@ func TestAnswerBreaksSpecification(t *testing.T) {
 	t.Run("neither a JIR nor errors", func(t *testing.T) {
 		protocolErr(t, 200, sign(answer(answerHeader)), "neither a JIR nor errors")
 	})
+	for _, jir := range []string{"not-a-jir", "00000000-C7A1-407F-A1B3-14118C9D1B83", " 00000000-c7a1-407f-a1b3-14118c9d1b83"} {
+		t.Run("a JIR that is not a UUID: "+jir, func(t *testing.T) {
+			protocolErr(t, 200, sign(answer(answerHeader+`<Jir>`+jir+`</Jir>`)), "is not a UUID")
+		})
+	}
 }
 
 func TestAnswerErrors(t *testing.T) {

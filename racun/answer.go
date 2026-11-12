@@ -5,12 +5,17 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/beevik/etree"
 	dsig "github.com/russellhaering/goxmldsig"
 )
+
+// jirPattern is the JIR's UUIDType in FiskalizacijaSchema.xsd: a UUID in
+// lowercase hexadecimal.
+var jirPattern = regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
 
 // NamespaceSOAP is the SOAP 1.1 envelope namespace.
 const NamespaceSOAP = "http://schemas.xmlsoap.org/soap/envelope/"
@@ -81,6 +86,8 @@ func (c *Client) readInvoiceAnswer(status int, data []byte) (*InvoiceResponse, e
 		return answerErrors(res)
 	case res.JIR == "":
 		return nil, ErrProtocol.WithRequestWritten(true).WithMessage("the answer has neither a JIR nor errors")
+	case !jirPattern.MatchString(res.JIR):
+		return nil, ErrProtocol.WithRequestWritten(true).WithMessage(fmt.Sprintf("the answer's JIR %q is not a UUID", res.JIR))
 	}
 	return res, nil
 }
