@@ -101,6 +101,9 @@ func New(conf *Config) (*Client, error) {
 	// The TLS configuration and the answer check share one pool.
 	roots := chains[conf.Environment]()
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// CIS uses one-way TLS (spec v2.7, §3.2): only the server shows a
+	// certificate. The company's certificate signs the request and the ZKI;
+	// it is not a TLS client certificate.
 	transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
 	return &Client{
 		url:    endpoint,
