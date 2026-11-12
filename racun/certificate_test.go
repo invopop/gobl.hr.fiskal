@@ -5,6 +5,8 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"testing"
 	"time"
 
@@ -40,6 +42,49 @@ func TestCertificateCheck(t *testing.T) {
 	t.Run("expired", func(t *testing.T) {
 		assert.ErrorContains(t, cert.check(cert.Cert.NotAfter.Add(time.Second)), "the certificate expired at")
 	})
+	t.Run("no OIB", func(t *testing.T) {
+		noOIB := withSubject(t, cert, pkix.Name{CommonName: "FISKAL TEST", Country: []string{"HR"}})
+		assert.EqualError(t, noOIB.check(now), "the certificate has no organizationIdentifier with an OIB")
+	})
+}
+
+func TestCertificateOIB(t *testing.T) {
+	cert := testCertificate(t)
+	for name, tc := range map[string]struct {
+		organizationID string
+		oib            string
+		err            string
+	}{
+		"FINA Fiskal":                           {organizationID: "HR80432461483", oib: "80432461483"},
+		"ETSI VAT identifier":                   {organizationID: "VATHR-80432461483", oib: "80432461483"},
+		"ETSI national registration identifier": {organizationID: "NTRHR-80432461483", oib: "80432461483"},
+		"another country":                       {organizationID: "VATES-B12345678", err: `the certificate's organizationIdentifier "VATES-B12345678" holds no OIB`},
+		"too few digits":                        {organizationID: "HR8043246148", err: `the certificate's organizationIdentifier "HR8043246148" holds no OIB`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			oib, err := withSubject(t, cert, finaSubject("FISKAL TEST", tc.organizationID)).OIB()
+			if tc.err != "" {
+				assert.EqualError(t, err, tc.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.oib, oib)
+		})
+	}
+}
+
+// withSubject is the certificate issued again, with the same key, to
+// another subject.
+func withSubject(t *testing.T, cert *Certificate, subject pkix.Name) *Certificate {
+	t.Helper()
+	tmpl := *cert.Cert
+	tmpl.Subject = subject
+	tmpl.RawSubject = nil // it would win over Subject
+	der, err := x509.CreateCertificate(rand.Reader, &tmpl, &tmpl, cert.Key.Public(), cert.Key)
+	require.NoError(t, err)
+	c, err := x509.ParseCertificate(der)
+	require.NoError(t, err)
+	return &Certificate{Cert: c, Key: cert.Key}
 }
 
 // New, Sign and ZKI refuse a certificate or key they can't use, before

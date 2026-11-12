@@ -15,8 +15,9 @@ import (
 // SHA-256 digest, and a reference to the root's Id. The certificate goes in
 // KeyInfo. It returns the signed request, ready for a SOAP body.
 //
-// The certificate must have an RSA key that belongs to it, and be valid
-// now. The request must have its Id, an invoice, and a header with a message
+// The certificate must have an RSA key that belongs to it, be valid now,
+// and be issued to the invoice's issuer, by OIB. The request must have its
+// Id, an invoice, and a header with a message
 // ID and the time it is sent: the schema requires them, and
 // Client.Fiscalize ties the answer to the request by the message ID.
 func Sign(cert *Certificate, req *InvoiceRequest) ([]byte, error) {
@@ -42,6 +43,10 @@ func Sign(cert *Certificate, req *InvoiceRequest) ([]byte, error) {
 	}
 	if req.Invoice == nil {
 		return nil, errors.New("the request has no invoice")
+	}
+	// check found the OIB already.
+	if oib, _ := cert.OIB(); req.Invoice.IssuerOIB != oib {
+		return nil, fmt.Errorf("the issuer's OIB %s is not the certificate's, %s: CIS would refuse the request (s005)", req.Invoice.IssuerOIB, oib)
 	}
 	data, err := xml.Marshal(req)
 	if err != nil {

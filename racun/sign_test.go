@@ -78,6 +78,13 @@ func TestSign(t *testing.T) {
 		assert.EqualError(t, err, "the request has no invoice")
 	})
 
+	t.Run("refuses an issuer that is not the certificate's", func(t *testing.T) {
+		req := testRequest()
+		req.Invoice.IssuerOIB = "12345678903"
+		_, err := Sign(cert, req)
+		assert.EqualError(t, err, "the issuer's OIB 12345678903 is not the certificate's, 80432461483: CIS would refuse the request (s005)")
+	})
+
 	t.Run("needs a header with a message ID and a time", func(t *testing.T) {
 		const msg = "the request needs a header with a message ID and the time it is sent"
 		for name, change := range map[string]func(*InvoiceRequest){
