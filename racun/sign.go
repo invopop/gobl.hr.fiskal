@@ -32,6 +32,14 @@ func Sign(cert *Certificate, req *InvoiceRequest) ([]byte, error) {
 	if req.Header == nil || req.Header.MessageID == "" || req.Header.SentAt == "" {
 		return nil, errors.New("the request needs a header with a message ID and the time it is sent")
 	}
+	// A malformed header is refused here, not by CIS, so that nothing that
+	// breaks the schema is sent. NewRequest always builds a valid one.
+	if !uuidPattern.MatchString(req.Header.MessageID) {
+		return nil, fmt.Errorf("the message ID %q is not a UUID in lowercase hexadecimal", req.Header.MessageID)
+	}
+	if _, err := time.Parse(DateTimeFormat, req.Header.SentAt); err != nil {
+		return nil, fmt.Errorf("the send time %q is not a time in the format dd.mm.yyyyThh:mm:ss", req.Header.SentAt)
+	}
 	if req.Invoice == nil {
 		return nil, errors.New("the request has no invoice")
 	}

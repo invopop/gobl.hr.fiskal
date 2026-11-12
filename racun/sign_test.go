@@ -93,6 +93,25 @@ func TestSign(t *testing.T) {
 			})
 		}
 	})
+	t.Run("needs a header in the schema's formats", func(t *testing.T) {
+		for name, tc := range map[string]struct {
+			change func(*InvoiceRequest)
+			msg    string
+		}{
+			"a message ID that is not a UUID": {func(r *InvoiceRequest) { r.Header.MessageID = "message-1" }, "is not a UUID"},
+			"a message ID in uppercase":       {func(r *InvoiceRequest) { r.Header.MessageID = "9C608E11-1B97-4425-A89D-3AD4BCBBA2E9" }, "is not a UUID"},
+			"a time in another format":        {func(r *InvoiceRequest) { r.Header.SentAt = "2026-11-10T16:18:23" }, "is not a time"},
+			"a time with no seconds":          {func(r *InvoiceRequest) { r.Header.SentAt = "10.11.2026T16:18" }, "is not a time"},
+			"a time that does not exist":      {func(r *InvoiceRequest) { r.Header.SentAt = "31.11.2026T16:18:23" }, "is not a time"},
+		} {
+			t.Run(name, func(t *testing.T) {
+				req := testRequest()
+				tc.change(req)
+				_, err := Sign(cert, req)
+				assert.ErrorContains(t, err, tc.msg)
+			})
+		}
+	})
 }
 
 func validator(cert *Certificate) *dsig.ValidationContext {
