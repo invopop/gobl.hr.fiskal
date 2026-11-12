@@ -102,3 +102,28 @@ func assertInOrder(t *testing.T, s string, parts ...string) {
 		at += i + len(p)
 	}
 }
+
+func TestRestrictiveCodes(t *testing.T) {
+	for name, tc := range map[string]struct {
+		errors []*ResponseError
+		codes  []string
+	}{
+		"one code": {
+			errors: []*ResponseError{{Code: "s013", Message: "Račun sadrži restriktivne greške: 176"}},
+			codes:  []string{"176"},
+		},
+		"several codes": {
+			errors: []*ResponseError{{Code: "s013", Message: "Račun sadrži restriktivne greške: 176, 182"}},
+			codes:  []string{"176", "182"},
+		},
+		"another error": {
+			errors: []*ResponseError{{Code: "s005", Message: "OIB iz poruke zahtjeva nije jednak OIB-u iz certifikata."}},
+		},
+		"no errors": {},
+	} {
+		t.Run(name, func(t *testing.T) {
+			res := &InvoiceResponse{Errors: tc.errors}
+			assert.Equal(t, tc.codes, res.RestrictiveCodes())
+		})
+	}
+}

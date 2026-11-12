@@ -93,6 +93,7 @@ func TestReadRecordedAnswers(t *testing.T) {
 		assert.Empty(t, res.JIR)
 		require.Len(t, res.Errors, 1)
 		assert.Equal(t, "s013", res.Errors[0].Code)
+		assert.Equal(t, []string{"179"}, res.RestrictiveCodes())
 	})
 }
 

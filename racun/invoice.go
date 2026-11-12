@@ -2,6 +2,8 @@ package racun
 
 import (
 	"encoding/xml"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -219,4 +221,30 @@ type ResponseError struct {
 	// Code is the error code, such as "s005" (SifraGreske).
 	Code    string `xml:"SifraGreske"`
 	Message string `xml:"PorukaGreske"`
+}
+
+// CodeRestrictive is the error of an invoice that breaks CIS's restrictive
+// checks (s013), such as an issue date more than 30 days old (176). The
+// codes of the checks it breaks are only in its message: "Račun sadrži
+// restriktivne greške: 179".
+const CodeRestrictive = "s013"
+
+// restrictiveCode is one code of a restrictive check, such as 176.
+var restrictiveCode = regexp.MustCompile(`\b\d{3}\b`)
+
+// RestrictiveCodes returns the codes of the restrictive checks the invoice
+// breaks, such as "176" (spec v2.7, §2.6), in the order CIS gives them.
+func (r *InvoiceResponse) RestrictiveCodes() []string {
+	var codes []string
+	for _, e := range r.Errors {
+		if e.Code != CodeRestrictive {
+			continue
+		}
+		list := e.Message
+		if i := strings.LastIndex(list, ":"); i >= 0 {
+			list = list[i+1:]
+		}
+		codes = append(codes, restrictiveCode.FindAllString(list, -1)...)
+	}
+	return codes
 }
