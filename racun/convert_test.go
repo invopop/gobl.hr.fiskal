@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
 	"encoding/xml"
@@ -420,7 +419,7 @@ func fixedCertificate(t *testing.T) *Certificate {
 	key := testKey(t)
 	tmpl := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
-		Subject:      pkix.Name{CommonName: "FISKAL TEST", Country: []string{"HR"}},
+		Subject:      finaSubject("FISKAL TEST", "HR"+invopopOIB),
 		NotBefore:    time.Now().Add(-time.Hour),
 		NotAfter:     time.Now().Add(time.Hour),
 	}
