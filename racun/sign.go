@@ -1,0 +1,77 @@
+package racun
+
+import (
+	"encoding/xml"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/beevik/etree"
+	dsig "github.com/russellhaering/goxmldsig"
+)
+
+// Sign marshals a request and adds an enveloped XML-DSig signature as the
+// last child of its root (§7): exclusive canonicalization, RSA-SHA256, a
+// SHA-256 digest, and a reference to the root's Id. The certificate goes in
+// KeyInfo. It returns the signed request, ready for a SOAP body.
+//
+// The certificate must have an RSA key that belongs to it, be valid now,
+// and be issued to the invoice's issuer, by OIB. The request must have its
+// Id, an invoice, and a header with a message
+// ID and the time it is sent: the schema requires them, and
+// Client.Fiscalize ties the answer to the request by the message ID.
+func Sign(cert *Certificate, req *InvoiceRequest) ([]byte, error) {
+	if err := cert.check(time.Now()); err != nil {
+		return nil, err
+	}
+	if req == nil {
+		return nil, errors.New("no request")
+	}
+	if req.ID == "" {
+		return nil, errors.New("the request has no Id to reference")
+	}
+	if req.Header == nil || req.Header.MessageID == "" || req.Header.SentAt == "" {
+		return nil, errors.New("the request needs a header with a message ID and the time it is sent")
+	}
+	// A malformed header is refused here, not by CIS, so that nothing that
+	// breaks the schema is sent. NewRequest always builds a valid one.
+	if !uuidPattern.MatchString(req.Header.MessageID) {
+		return nil, fmt.Errorf("the message ID %q is not a UUID in lowercase hexadecimal", req.Header.MessageID)
+	}
+	if _, err := time.Parse(DateTimeFormat, req.Header.SentAt); err != nil {
+		return nil, fmt.Errorf("the send time %q is not a time in the format dd.mm.yyyyThh:mm:ss", req.Header.SentAt)
+	}
+	if req.Invoice == nil {
+		return nil, errors.New("the request has no invoice")
+	}
+	// check found the OIB already.
+	if oib, _ := cert.OIB(); req.Invoice.IssuerOIB != oib {
+		return nil, fmt.Errorf("the issuer's OIB %s is not the certificate's, %s: CIS would refuse the request (s005)", req.Invoice.IssuerOIB, oib)
+	}
+	data, err := xml.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling request: %w", err)
+	}
+	doc := etree.NewDocument()
+	if err := doc.ReadFromBytes(data); err != nil {
+		return nil, fmt.Errorf("reading request: %w", err)
+	}
+
+	ctx, err := dsig.NewSigningContext(cert.Key, [][]byte{cert.Cert.Raw})
+	if err != nil {
+		return nil, fmt.Errorf("signing context: %w", err)
+	}
+	ctx.IdAttribute = "Id"
+	ctx.Canonicalizer = dsig.MakeC14N10ExclusiveCanonicalizerWithPrefixList("")
+	if err := ctx.SetSignatureMethod(dsig.RSASHA256SignatureMethod); err != nil {
+		return nil, err
+	}
+	signed, err := ctx.SignEnveloped(doc.Root())
+	if err != nil {
+		return nil, fmt.Errorf("signing request: %w", err)
+	}
+
+	out := etree.NewDocument()
+	out.SetRoot(signed)
+	return out.WriteToBytes()
+}
