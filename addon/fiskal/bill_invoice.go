@@ -140,8 +140,8 @@ func billInvoiceRules() *rules.Set {
 		rules.Assert("03", "invoice must be in EUR or provide an exchange rate to EUR: CIS receives the amounts in euros",
 			currency.CanConvertTo(currency.EUR),
 		),
+		// The normalizer always sets the invoice tax, so it needs no rule.
 		rules.Field("tax",
-			rules.Assert("04", "invoice tax is required", is.Present),
 			rules.Field("ext",
 				rules.Assert("05", fmt.Sprintf("invoice tax ext requires the business premises (%s) and device (%s) labels (BrRac)", ExtKeyPremises, ExtKeyDevice),
 					tax.ExtensionsRequire(ExtKeyPremises, ExtKeyDevice),
@@ -200,11 +200,12 @@ func billInvoiceRules() *rules.Set {
 				),
 			),
 		),
-		// Rules 18 to 23 refuse what the racun conversion refuses. A valid
-		// invoice must always convert: Invopop numbers it before it is
-		// fiscalized, and a numbered invoice that is never issued leaves a
-		// gap in the sequence, which Art. 9(2) of the Fiscalization Act
-		// forbids.
+		// Rules 18 to 23 refuse what the racun conversion can't convert.
+		// racun does not check them again: these rules are the only check,
+		// and a valid invoice must always convert. Invopop numbers it before
+		// it is fiscalized, and a numbered invoice that is never issued
+		// leaves a gap in the sequence, which Art. 9(2) of the
+		// Fiscalization Act forbids.
 		//
 		// Rules 18, 19 and 21 are cases racun does not support yet:
 		// corrections (EU3-29) and fees (EU3-34). Drop a rule when racun

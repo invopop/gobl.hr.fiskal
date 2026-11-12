@@ -365,6 +365,9 @@ func TestBuyerOIBNotWithTransfer(t *testing.T) {
 	assert.Empty(t, r.BuyerOIB)
 }
 
+// TestErrors covers what the conversion refuses: an input that breaks its
+// contract in a way the addon rules can't see, and a technical failure.
+// The addon rules check the invoice's content, in addon/fiskal.
 func TestErrors(t *testing.T) {
 	key := testKey(t)
 	tests := []struct {
@@ -373,17 +376,9 @@ func TestErrors(t *testing.T) {
 		err  error
 		msg  string
 	}{
-		{name: "no issue time", inv: func(i *bill.Invoice) { i.IssueTime = nil }, err: ErrMissing, msg: "issue time"},
 		{name: "no code", inv: func(i *bill.Invoice) { i.Code = "" }, err: ErrMissing, msg: "invoice code"},
 		{name: "no addon", inv: func(i *bill.Invoice) { i.Addons = tax.Addons{} }, err: ErrMissing, msg: "hr-fiskal-b2c-v1"},
-		{name: "a foreign supplier", inv: func(i *bill.Invoice) { i.Supplier.TaxID.Country = "SI" }, err: ErrInvalid, msg: "the issuer must be Croatian"},
-		{name: "a credit note", inv: func(i *bill.Invoice) { i.Type = bill.InvoiceTypeCreditNote }, err: ErrUnsupported, msg: "credit-note"},
 		{name: "another currency without an exchange rate", inv: func(i *bill.Invoice) { i.Currency = "USD" }, err: ErrInvalid, msg: "CIS receives euros"},
-		{name: "not calculated", inv: func(i *bill.Invoice) { i.Totals = nil }, err: ErrMissing, msg: "calculate"},
-		{name: "no premises", inv: func(i *bill.Invoice) { i.Tax.Ext = i.Tax.Ext.Delete(fiskal.ExtKeyPremises) }, err: ErrMissing, msg: "premises"},
-		{name: "no device", inv: func(i *bill.Invoice) { i.Tax.Ext = i.Tax.Ext.Delete(fiskal.ExtKeyDevice) }, err: ErrMissing, msg: "device"},
-		{name: "no operator", inv: func(i *bill.Invoice) { i.Supplier.People = nil }, err: ErrMissing, msg: "operator"},
-		{name: "an operator without an OIB", inv: func(i *bill.Invoice) { i.Supplier.People[0].Identities = nil }, err: ErrMissing, msg: "operator OIB"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -396,45 +391,9 @@ func TestErrors(t *testing.T) {
 		})
 	}
 
-	t.Run("a charge without taxes", func(t *testing.T) {
-		inv := withCharges(t, []*bill.Charge{{Amount: num.MakeAmount(10, 2), Reason: "Povratna naknada"}}, nil)
-		_, err := FromInvoice(inv, testOptions(), key)
-		require.ErrorIs(t, err, ErrUnsupported)
-		assert.ErrorContains(t, err, "Povratna naknada")
-	})
-	t.Run("a discount without taxes", func(t *testing.T) {
-		inv := withCharges(t, nil, []*bill.Discount{{Amount: num.MakeAmount(10, 2), Reason: "Promo"}})
-		_, err := FromInvoice(inv, testOptions(), key)
-		require.ErrorIs(t, err, ErrUnsupported)
-		assert.ErrorContains(t, err, "Promo")
-	})
-	t.Run("a rounding amount", func(t *testing.T) {
-		inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-		rounding := num.MakeAmount(-5, 2)
-		inv.Totals.Rounding = &rounding
-		require.NoError(t, inv.Calculate())
-		require.Equal(t, "10.60", inv.Totals.Payable.String())
-		_, err := FromInvoice(inv, testOptions(), key)
-		require.ErrorIs(t, err, ErrUnsupported)
-		assert.ErrorContains(t, err, "rounding -0.05")
-	})
 	t.Run("not an invoice", func(t *testing.T) {
 		_, err := NewInvoice(nil, testOptions(), key)
 		assert.ErrorIs(t, err, ErrNotInvoice)
-	})
-	t.Run("a reverse charge", func(t *testing.T) {
-		env := loadExample(t, "business-buyer-card.json")
-		inv := env.Extract().(*bill.Invoice)
-		inv.Totals.Taxes.Categories[0].Rates[0].Key = "reverse-charge"
-		_, err := FromInvoice(inv, testOptions(), key)
-		assert.ErrorIs(t, err, ErrUnsupported)
-	})
-	t.Run("an issue time ZKI needs", func(t *testing.T) {
-		env := loadExample(t, "cash-prices-include-vat.json")
-		inv := env.Extract().(*bill.Invoice)
-		inv.IssueTime = nil
-		_, err := FromInvoice(inv, testOptions(), key)
-		assert.ErrorIs(t, err, ErrMissing)
 	})
 }
 

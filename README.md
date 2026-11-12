@@ -38,7 +38,9 @@ Fiscalization Act), so the addon refuses an invoice that also uses
   (`RacunZahtjev`) from a GOBL invoice with the `hr-fiskal-b2c-v1` addon,
   computes its ZKI (the issuer's protection code), signs it with XML-DSig,
   and sends it to CIS, checking CIS's signed answer for the JIR. `AddStamps`
-  adds the ZKI, the JIR and the QR code URL to the envelope.
+  adds the ZKI, the JIR and the QR code URL to the envelope. The conversion
+  expects a calculated, valid and numbered invoice: the addon rules are the
+  only check on its content, and `racun` does not repeat them.
 - `ca/` — the FINA CA certificates that CIS clients trust, embedded: the demo
   chain for CIS test and the production chain for production CIS. FINA's CAs
   are not in the system certificate store, and the CIS servers send their

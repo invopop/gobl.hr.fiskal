@@ -33,17 +33,19 @@ import (
 	"github.com/invopop/gobl.hr.fiskal/addon/fiskal"
 )
 
-// Errors the conversion returns, wrapped with the field they are about.
+// Errors the conversion returns. The conversion does not check the
+// invoice's content: the addon rules do, when the invoice is validated.
+// It only refuses an input that breaks its contract in a way the rules
+// can't see, and reports technical failures.
 var (
 	// ErrNotInvoice is an envelope that holds no invoice.
 	ErrNotInvoice = errors.New("envelope does not hold an invoice")
-	// ErrMissing is an invoice without a field or addon fiscalization
-	// requires.
-	ErrMissing = errors.New("missing a field fiscalization requires")
-	// ErrInvalid is a field whose value fiscalization can't take.
+	// ErrMissing is an invoice without the addon or the code the
+	// conversion requires.
+	ErrMissing = errors.New("missing what fiscalization requires")
+	// ErrInvalid is a value fiscalization can't take, such as an amount
+	// that can't be converted to euros.
 	ErrInvalid = errors.New("has a value fiscalization can't take")
-	// ErrUnsupported is an invoice the conversion does not handle yet.
-	ErrUnsupported = errors.New("not supported for fiscalization yet")
 )
 
 // Options are the Invoice values that are not in the GOBL invoice, as they
@@ -70,9 +72,12 @@ func NewInvoice(env *gobl.Envelope, opts *Options, key crypto.Signer) (*Invoice,
 }
 
 // FromInvoice builds the Invoice of a calculated and valid GOBL invoice with
-// the hr-fiskal-b2c-v1 addon, with its ZKI
-// computed with key, the issuer's private key. The ZKI goes on the printed
-// invoice and does not change when the Invoice is sent again.
+// the hr-fiskal-b2c-v1 addon and a code, with its ZKI computed with key, the
+// issuer's private key. The ZKI goes on the printed invoice and does not
+// change when the Invoice is sent again.
+//
+// The addon rules check the invoice's content, so the conversion does not
+// check it again: an invoice that breaks them is outside its contract.
 func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice, error) {
 	if opts == nil {
 		opts = new(Options)
@@ -86,34 +91,23 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 		return nil, err
 	}
 
-	if r.IssuerOIB, err = issuerOIB(inv); err != nil {
-		return nil, err
-	}
-	issuedAt, err := issueTime(inv)
-	if err != nil {
-		return nil, err
-	}
+	r.IssuerOIB = inv.Supplier.TaxID.Code.String()
+	issuedAt := issueTime(inv)
 	r.IssuedAt = formatDateTime(issuedAt, "T")
 	ext := inv.Tax.Ext
-	if r.Number, err = number(inv); err != nil {
-		return nil, err
-	}
+	r.Number = number(inv)
 	r.SequenceScope = SequencePremises
 	if ext.Get(fiskal.ExtKeySequenceScope) == fiskal.SequenceDevice {
 		r.SequenceScope = SequenceDevice
 	}
 	r.InVATSystem = inv.Supplier.Ext.Get(fiskal.ExtKeyVATSystem) != fiskal.VATSystemOut
-	if err := addTaxes(r, inv); err != nil {
-		return nil, err
-	}
+	addTaxes(r, inv)
 	if !r.InVATSystem {
 		dropVATBreakdown(r)
 	}
 	r.Total = amount(inv.Totals.Payable)
 	r.PaymentMethod = paymentMethod(inv.Payment)
-	if r.OperatorOIB, err = operatorOIB(inv); err != nil {
-		return nil, err
-	}
+	r.OperatorOIB = operatorOIB(inv)
 	r.HandwrittenNumber = ext.Get(fiskal.ExtKeyPaperNumber).String()
 	r.LateDelivery = opts.LateDelivery || r.HandwrittenNumber != ""
 	// CIS refuses a buyer's OIB on an invoice paid by bank transfer (error
@@ -134,45 +128,18 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 	return r, nil
 }
 
-// checkInvoice refuses invoices the conversion does not handle.
+// checkInvoice refuses an input that breaks the contract of the conversion
+// in a way the addon rules can't see: an invoice without the addon, whose
+// rules then never ran, or without a code, which the rules allow so that a
+// draft can be validated before it is numbered.
 func checkInvoice(inv *bill.Invoice) error {
 	switch {
 	case inv == nil:
 		return ErrNotInvoice
 	case !fiskal.V1.In(inv.GetAddons()...):
 		return fmt.Errorf("addon %s %w", fiskal.V1, ErrMissing)
-	case inv.Tax == nil:
-		return fmt.Errorf("tax %w", ErrMissing)
-	case inv.Totals == nil:
-		return fmt.Errorf("totals %w: calculate the invoice first", ErrMissing)
-	case inv.Type != bill.InvoiceTypeStandard:
-		return fmt.Errorf("invoice type %q %w", inv.Type, ErrUnsupported)
-	case inv.Totals.Payable.IsNegative():
-		return fmt.Errorf("negative total %w", ErrUnsupported)
-	case inv.Totals.Rounding != nil && !inv.Totals.Rounding.IsZero():
-		// GOBL adds the rounding to Totals.Payable, so to the total and the
-		// ZKI, but to no tax breakdown, and the request has no element for
-		// it.
-		return fmt.Errorf("rounding %s %w", inv.Totals.Rounding, ErrUnsupported)
-	}
-	// A line, charge or discount with VAT is in Totals.Taxes, so the VAT
-	// breakdown includes it. One without taxes changes the total but no
-	// breakdown. A charge without taxes is usually a fee (Naknade), which is
-	// not supported.
-	for i, l := range inv.Lines {
-		if len(l.Taxes) == 0 {
-			return fmt.Errorf("line %d without taxes %w: use the VAT key exempt or outside-scope", i+1, ErrUnsupported)
-		}
-	}
-	for _, c := range inv.Charges {
-		if len(c.Taxes) == 0 {
-			return fmt.Errorf("charge %q without taxes %w: fees (Naknade) are not supported", c.Reason, ErrUnsupported)
-		}
-	}
-	for _, d := range inv.Discounts {
-		if len(d.Taxes) == 0 {
-			return fmt.Errorf("discount %q without taxes %w", d.Reason, ErrUnsupported)
-		}
+	case inv.Code == cbc.CodeEmpty:
+		return fmt.Errorf("invoice code %w: number the invoice first", ErrMissing)
 	}
 	return nil
 }
@@ -198,97 +165,59 @@ func inEuros(inv *bill.Invoice) (*bill.Invoice, error) {
 	return eur, nil
 }
 
-func issuerOIB(inv *bill.Invoice) (string, error) {
-	if inv.Supplier == nil || inv.Supplier.TaxID == nil || inv.Supplier.TaxID.Code == "" {
-		return "", fmt.Errorf("supplier tax ID %w", ErrMissing)
-	}
-	if inv.Supplier.TaxID.Country != l10n.HR.Tax() {
-		return "", fmt.Errorf("supplier tax ID country %q %w: the issuer must be Croatian", inv.Supplier.TaxID.Country, ErrInvalid)
-	}
-	return inv.Supplier.TaxID.Code.String(), nil
-}
-
 // operatorOIB is the OIB of the supplier person with the operator key.
-func operatorOIB(inv *bill.Invoice) (string, error) {
+func operatorOIB(inv *bill.Invoice) string {
 	op := fiskal.Operator(inv.Supplier.People)
-	if op == nil {
-		return "", fmt.Errorf("operator %w: a supplier person with the %q key", ErrMissing, fiskal.PersonKeyOperator)
-	}
-	id := org.IdentityForType(op.Identities, hr.IdentityTypeOIB)
-	if id == nil {
-		return "", fmt.Errorf("operator OIB %w", ErrMissing)
-	}
-	return id.Code.String(), nil
+	return org.IdentityForType(op.Identities, hr.IdentityTypeOIB).Code.String()
 }
 
 // issueTime is the issue date and time of the invoice. GOBL dates and times
 // are local to the regime and have no zone, and so do the Invoice's, so they
 // are copied as they are: a time.Time would move a time that does not exist
-// in Croatia, such as 02:30 on the day clocks go forward. Fiscalization
-// needs the time, so it must be set. Only a nil time is missing: 00:00:00
-// is the zero value of cal.Time, but it is also midnight, a valid issue
-// time.
-func issueTime(inv *bill.Invoice) (cal.DateTime, error) {
-	if inv.IssueTime == nil {
-		return cal.DateTime{}, fmt.Errorf("issue time %w", ErrMissing)
-	}
+// in Croatia, such as 02:30 on the day clocks go forward. 00:00:00 is
+// midnight, a valid issue time.
+func issueTime(inv *bill.Invoice) cal.DateTime {
 	d, t := inv.IssueDate, inv.IssueTime
-	return cal.MakeDateTime(d.Year, d.Month, d.Day, t.Hour, t.Minute, t.Second), nil
+	return cal.MakeDateTime(d.Year, d.Month, d.Day, t.Hour, t.Minute, t.Second)
 }
 
 // number is the invoice number: the GOBL invoice code, which the addon
 // requires to be the bare sequential number, and the business premises and
 // device labels.
-func number(inv *bill.Invoice) (*Number, error) {
-	n := &Number{
+func number(inv *bill.Invoice) *Number {
+	return &Number{
 		Sequential: inv.Code.String(),
 		Premises:   inv.Tax.Ext.Get(fiskal.ExtKeyPremises).String(),
 		Device:     inv.Tax.Ext.Get(fiskal.ExtKeyDevice).String(),
 	}
-	switch {
-	case n.Sequential == "":
-		return nil, fmt.Errorf("invoice code %w", ErrMissing)
-	case n.Premises == "":
-		return nil, fmt.Errorf("premises label (%s) %w", fiskal.ExtKeyPremises, ErrMissing)
-	case n.Device == "":
-		return nil, fmt.Errorf("device label (%s) %w", fiskal.ExtKeyDevice, ErrMissing)
-	}
-	return n, nil
 }
 
 // addTaxes adds the VAT breakdown: one entry per rate with a percentage, and
-// the exempt and outside-scope bases as totals.
-func addTaxes(r *Invoice, inv *bill.Invoice) error {
-	if inv.Totals.Taxes == nil {
-		return nil
+// the exempt and outside-scope bases as totals. The addon rules allow only
+// VAT, and no reverse charge, so every other rate has a percentage.
+func addTaxes(r *Invoice, inv *bill.Invoice) {
+	vat := inv.Totals.Taxes.Category(tax.CategoryVAT)
+	if vat == nil {
+		return
 	}
 	// The totals start with two decimals: Add keeps the decimals of its
 	// receiver, so a zero Amount would round every base to whole euros.
 	exempt, outside := num.MakeAmount(0, 2), num.MakeAmount(0, 2)
 	var hasExempt, hasOutside bool
-	for _, cat := range inv.Totals.Taxes.Categories {
-		if cat.Code != tax.CategoryVAT {
-			return fmt.Errorf("tax category %q %w", cat.Code, ErrUnsupported)
-		}
-		for _, rate := range cat.Rates {
-			switch {
-			case rate.Key.In(tax.KeyExempt, tax.KeyExport):
-				exempt = exempt.Add(rate.Base)
-				hasExempt = true
-			case rate.Key == tax.KeyOutsideScope:
-				outside = outside.Add(rate.Base)
-				hasOutside = true
-			case rate.Key.In(tax.KeyReverseCharge, tax.KeyIntraCommunity):
-				return fmt.Errorf("VAT key %q %w", rate.Key, ErrUnsupported)
-			case rate.Percent == nil:
-				return fmt.Errorf("VAT rate without a percentage (key %q) %w", rate.Key, ErrMissing)
-			default:
-				r.VAT = append(r.VAT, &Tax{
-					Rate:   percent(*rate.Percent),
-					Base:   amount(rate.Base),
-					Amount: amount(rate.Amount),
-				})
-			}
+	for _, rate := range vat.Rates {
+		switch rate.Key {
+		case tax.KeyExempt, tax.KeyExport:
+			exempt = exempt.Add(rate.Base)
+			hasExempt = true
+		case tax.KeyOutsideScope:
+			outside = outside.Add(rate.Base)
+			hasOutside = true
+		default:
+			r.VAT = append(r.VAT, &Tax{
+				Rate:   percent(*rate.Percent),
+				Base:   amount(rate.Base),
+				Amount: amount(rate.Amount),
+			})
 		}
 	}
 	if hasExempt {
@@ -297,7 +226,6 @@ func addTaxes(r *Invoice, inv *bill.Invoice) error {
 	if hasOutside {
 		r.NotSubjectAmount = amount(outside)
 	}
-	return nil
 }
 
 // dropVATBreakdown leaves out the VAT breakdown of an issuer outside the VAT
