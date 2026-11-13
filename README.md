@@ -16,26 +16,121 @@ those a shop issues at the till (Fiscalization 1.0, "fiskalizacija računa u kra
 potrošnji", Zakon o fiskalizaciji, NN 89/25), with the Tax Administration's
 invoice fiscalization service, CIS. Croatian law calls these documents
 računi (invoices), the same word as in eRačun; it has no separate term for a
-receipt.
+receipt. The module provides the GOBL addon `hr-fiskal-b2c-v1` in
+`addon/fiskal/`, and the conversion and client in `racun/`.
 
 The Croatian tax regime itself (`regimes/hr`) lives in GOBL core. The
 Croatian eRačun, the e-invoice businesses exchange under Fiscalization 2.0,
-lives in [gobl.hr.eracun](https://github.com/invopop/gobl.hr.eracun).
+lives in [gobl.hr.eracun](https://github.com/invopop/gobl.hr.eracun). A sale
+fiscalized as a receipt cannot also be an eRačun (Art. 39(2) of the
+Fiscalization Act), so the addon refuses an invoice that also uses
+`hr-eracun-v1`.
 
 ## Layout
 
+- `addon/fiskal/` — the GOBL addon `hr-fiskal-b2c-v1` for invoices
+  fiscalized at the time of the sale: the business premises and device
+  labels, the numbering scope, the VAT system and the paper invoice number as
+  extensions of the invoice tax, the operator as a supplier person (as in
+  `hr-eracun-v1`), and the rules CIS needs met. It also defines the stamps of
+  a fiscalized invoice: `fiskal-zki`, `fiskal-jir` and `fiskal-qr`.
 - `racun/` — invoice fiscalization: builds the invoice request
-  (`RacunZahtjev`) from a GOBL invoice, computes its ZKI (the issuer's
-  protection code), signs it with XML-DSig, and sends it to CIS, checking
-  CIS's signed answer for the JIR.
-  The premises and device labels, the operator's OIB and the numbering scope
-  come from `Options` until a B2C addon carries them.
+  (`RacunZahtjev`) from a GOBL invoice with the `hr-fiskal-b2c-v1` addon,
+  computes its ZKI (the issuer's protection code), signs it with XML-DSig,
+  and sends it to CIS, checking CIS's signed answer for the JIR. `AddStamps`
+  adds the ZKI, the JIR and the QR code URL to the envelope. The conversion
+  expects a calculated, valid and numbered invoice: the addon rules are the
+  only check on its content, and `racun` does not repeat them.
 - `ca/` — the FINA CA certificates that CIS clients trust, embedded: the demo
   chain for CIS test and the production chain for production CIS. FINA's CAs
   are not in the system certificate store, and the CIS servers send their
   TLS certificate without its intermediate. `racun` trusts the chain of its
   environment and nothing else.
 - the module root is reserved for tooling built on top of them.
+
+## Usage
+
+Add a blank import of the **addon** so it registers itself, then use GOBL as
+normal:
+
+```go
+import (
+	_ "github.com/invopop/gobl.hr.fiskal/addon/fiskal"
+)
+```
+
+Declare `hr-fiskal-b2c-v1` on an invoice and `Calculate` + `Validate` will
+run the addon's normalization and rules. To fiscalize it, build the
+invoice with `racun.NewInvoice`, wrap it with `racun.NewRequest`, send it
+with `Client.Fiscalize`, and add the stamps with `racun.AddStamps`.
+
+> **Note**: `hr-fiskal-b2c-v1` is not yet in GOBL core's approved
+> external-addon registry. It is added there once this module is released.
+
+## Extensions
+
+The `hr-fiskal-b2c-v1` addon sets these on the invoice tax:
+
+| Key | Description |
+| --- | --- |
+| `hr-fiskal-premises` | Business premises label registered in ePorezna (`OznPosPr`): up to 20 letters and digits. Required. |
+| `hr-fiskal-device` | Label of the device that issued the invoice (`OznNapUr`): up to 20 digits with no leading zero. Required. |
+| `hr-fiskal-sequence-scope` | What the invoice numbers count within (`OznSlijed`): `P` per business premises (the default) or `N` per device. |
+| `hr-fiskal-paper-number` | Number of an invoice from the bound paper invoice book, entered after the till broke down (`ParagonBrRac`): up to 100 characters. Such an invoice is sent late. |
+
+The supplier party carries one more:
+
+| Key | Description |
+| --- | --- |
+| `hr-fiskal-vat-system` | Whether the supplier is in the VAT system (`USustPdv`): `Y` (the default) or `N`. A small taxpayer, exempt from VAT under Art. 90(1) of the VAT Act, is outside it: its lines use the VAT key `exempt`, and the addon adds a note citing the exemption to an invoice with exempt VAT, as Art. 79(3) requires. A supply outside the scope of VAT uses the key `outside-scope` and gets no note. `racun` sends CIS only the total of such an invoice, with no VAT breakdown: CIS checks the breakdown only for an issuer in the VAT system. |
+
+The invoice code is the bare sequential number (`BrOznRac`): digits with no
+leading zero. A printed invoice shows the number as
+`BrOznRac/OznPosPr/OznNapUr`, such as `1001/POS1/1`.
+
+The number can come from two places:
+
+- **A till that numbers its own invoices** sends the code with the labels.
+- **Invopop numbers the invoice.** The invoice arrives without a code, and the
+  sequence step of the workflow gives it one. That step keeps one counter for
+  each supplier and series, so the addon sets the series from the labels: the
+  premises label for scope `P` (`POS1`), or `<premises>/<device>` for scope `N`
+  (`POS1/1`). CIS refuses leading zeros, so the addon removes them from a
+  code made only of digits: the step's default padding of six digits gives
+  `000042`, which becomes `42`. The step must not add a prefix or a suffix,
+  and must count per series (not use one fixed sequence for every premises).
+
+The rules refuse a series that does not match the labels, so that a counter
+never numbers two premises or two devices.
+
+## Issue date and time
+
+The invoice must have its `issue_date` and `issue_time`, in Croatian time.
+CIS receives both (`DatVrijeme`), and the issue time goes into the ZKI. The
+addon does not fill in a missing time with the current time. A normalizer
+runs on every calculation, so it would use the time when a draft was first
+calculated, not the time when the invoice was issued.
+
+## Operator
+
+The operator is the person who issued the invoice: the person at the till,
+or the supplier for a self-service device. CIS receives their OIB
+(`OibOper`). Give the operator the `operator` key and an `OIB` identity, the
+same convention as the `hr-eracun-v1` addon:
+
+```yaml
+supplier:
+  people:
+    - key: operator
+      name:
+        given: "Operater1"
+      identities:
+        - type: OIB
+          code: "12345678903"
+```
+
+An invoice with no person with the key, or more than one, is rejected; no
+other person is taken in their place.
 
 ## Invoice fiscalization request
 
@@ -154,6 +249,17 @@ place cannot be built by any consumer.
 
 ```sh
 go test ./...
+```
+
+### Examples
+
+`examples/` holds GOBL invoices with the `hr-fiskal-b2c-v1` addon, with their
+expected JSON envelopes under `examples/out/`. They are verified via GOBL's
+shared `pkg/examples` helpers. Regenerate the golden output after
+intentional changes with:
+
+```sh
+go test . -run TestExamples -update
 ```
 
 ### Invoice fiscalization (`racun`)

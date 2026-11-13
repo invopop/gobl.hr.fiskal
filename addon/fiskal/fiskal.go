@@ -1,0 +1,144 @@
+// Package fiskal implements the Croatian Fiskal addon for B2C invoices: the
+// rules an invoice issued to a consumer must follow to be fiscalized with the
+// Tax Administration's invoice fiscalization service (Fiscalization 1.0,
+// "fiskalizacija računa u krajnjoj potrošnji", Fiscalization Act, NN 89/25).
+//
+// Croatian law calls the document a shop prints a račun, an invoice: it has
+// no separate term for a receipt. The racun package converts an invoice with
+// this addon into the message CIS (the Tax Administration's fiscalization
+// service) receives.
+package fiskal
+
+import (
+	"github.com/invopop/gobl/cbc"
+	"github.com/invopop/gobl/i18n"
+	"github.com/invopop/gobl/norm"
+	"github.com/invopop/gobl/pkg/here"
+	"github.com/invopop/gobl/rules"
+	"github.com/invopop/gobl/rules/is"
+	"github.com/invopop/gobl/tax"
+)
+
+const (
+	// Namespace is the rules namespace for the Croatian Fiskal B2C addon.
+	Namespace rules.Code = "HR-FISKAL-B2C"
+
+	// Key identifies the Croatian Fiskal B2C addon family.
+	Key cbc.Key = "hr-fiskal-b2c"
+
+	// V1 is the version of the addon for the specification "Fiskalizacija
+	// računa u krajnjoj potrošnji" v2.7 and FiskalizacijaSchema.xsd v1.10.
+	V1 cbc.Key = Key + "-v1"
+)
+
+func init() {
+	tax.RegisterAddonDef(newAddon())
+	rules.RegisterWithGuard(
+		Key.String(),
+		rules.GOBL.Add(Namespace),
+		is.InContext(tax.AddonIn(V1)),
+		billInvoiceRules(),
+		taxComboRules(),
+	)
+	norm.RegisterWithGuard(is.InContext(tax.AddonIn(V1)),
+		norm.For(normalizeInvoice),
+		norm.For(normalizeTaxCombo),
+	)
+}
+
+func newAddon() *tax.AddonDef {
+	return &tax.AddonDef{
+		Key: V1,
+		Name: i18n.String{
+			i18n.EN: "Croatia Fiskal B2C invoices",
+			i18n.HR: "Hrvatska fiskalizacija računa u krajnjoj potrošnji",
+		},
+		Description: i18n.String{
+			i18n.EN: here.Doc(`
+				Support for Croatian invoices fiscalized at the time of the sale
+				(Fiscalization 1.0), such as the invoices a shop prints at the till.
+				Each invoice is reported to the Tax Administration's fiscalization
+				service (CIS), which answers with a unique invoice identifier (JIR).
+
+				The invoice number has three parts: the invoice code, which must be
+				the bare sequential number, the business premises label and the
+				device label. Set the labels, as registered in ePorezna, in the
+				hr-fiskal-premises and hr-fiskal-device extensions of the invoice tax.
+				The numbering scope (hr-fiskal-sequence-scope) is per business
+				premises unless set to N, per device.
+
+				The invoice can arrive with its number, from a till that numbers its
+				own invoices, or without a code, for Invopop to number it. The series
+				is set from the labels to match the numbering scope: the premises
+				label for scope P, such as "POS1", or the premises and device labels
+				for scope N, such as "POS1/1". A counter that runs per series then
+				numbers each premises, or each device, on its own. A series that does
+				not match the labels is refused. Leading zeros are removed from a
+				code made only of digits, such as a padded "000042", as CIS refuses
+				them.
+
+				The operator is the supplier person with the "operator" key, with an
+				OIB identity: the person at the till, or the supplier for a
+				self-service device. It is the same convention as the hr-eracun-v1
+				addon.
+
+				A supplier outside the VAT system, such as a small taxpayer under
+				Art. 90(1) of the VAT Act, sets hr-fiskal-vat-system to N in its own
+				extensions. It must not charge VAT: its lines use the VAT key exempt,
+				and an invoice with exempt VAT gets a note citing the exemption. A
+				supply outside the scope of VAT uses the key outside-scope, with no
+				note. CIS receives only
+				the total of its invoices, with no VAT breakdown.
+
+				An invoice from the bound paper invoice book, entered after the till
+				broke down, carries its paper number in hr-fiskal-paper-number.
+
+				CIS receives the amounts in euros. An invoice in another currency
+				must give an exchange rate to EUR, and is converted with it when
+				it is fiscalized. Its printed invoice must also show the amounts
+				in euros (Art. 81 of the VAT Act).
+
+				The invoice must have its issue date and time, in Croatian time:
+				the issue time goes into the ZKI (the issuer's protection code).
+				The addon does not fill in a missing time.
+
+				Once fiscalized, the invoice is stamped with the ZKI, the JIR and the
+				URL of the QR code to print.
+
+				Some invoices can't be fiscalized, and are refused before they are
+				numbered, so that no number is lost (the sequence must have no
+				gaps, Art. 9(2) of the Fiscalization Act). Credit notes and other
+				corrections, negative totals, charges without VAT, taxes other
+				than VAT, and reverse charge are not supported yet. A rounding
+				amount, a discount without VAT and a line without VAT are never
+				accepted: the invoice request has no element for them, and CIS
+				checks that the total is the sum of the tax breakdowns. A line
+				with no VAT to charge uses the VAT key exempt or outside-scope.
+				A VAT rate other than 0, 5, 13 or 25 % is refused too, as CIS
+				refuses it.
+
+				A sale fiscalized as a receipt cannot also be issued and
+				fiscalized as an eRačun (Art. 39(2) of the Fiscalization Act), so
+				an invoice that also uses the hr-eracun-v1 addon is refused.
+			`),
+		},
+		Sources: []*cbc.Source{
+			{
+				Title: i18n.String{
+					i18n.EN: "Porezna uprava - Fiscalization of invoices in final consumption",
+					i18n.HR: "Porezna uprava - Fiskalizacija u krajnjoj potrošnji",
+				},
+				URL: "https://porezna.gov.hr/fiskalizacija/gotovinski-racuni",
+			},
+			{
+				Title: i18n.String{
+					i18n.EN: "Fiscalization of invoices in final consumption: technical specification",
+					i18n.HR: "Fiskalizacija u krajnjoj potrošnji: tehnička specifikacija",
+				},
+				URL: "https://porezna.gov.hr/fiskalizacija/gotovinski-racuni/tehnicka-specifikacija",
+			},
+		},
+		Extensions: extensions,
+		Scenarios:  []*tax.ScenarioSet{invoiceScenarios},
+	}
+}

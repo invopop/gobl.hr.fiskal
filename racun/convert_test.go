@@ -20,11 +20,15 @@ import (
 	"github.com/invopop/gobl/bill"
 	"github.com/invopop/gobl/cal"
 	"github.com/invopop/gobl/cbc"
+	"github.com/invopop/gobl/currency"
 	"github.com/invopop/gobl/num"
 	"github.com/invopop/gobl/pay"
+	"github.com/invopop/gobl/rules"
 	"github.com/invopop/gobl/tax"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/invopop/gobl.hr.fiskal/addon/fiskal"
 )
 
 var update = flag.Bool("update", false, "write the expected invoices in testdata/out")
@@ -36,10 +40,10 @@ const (
 	fiveEuros = "5.00"
 )
 
-// testOptions are the options of every example: premises POS1, device 1,
-// Invopop's OIB as the operator.
+// testOptions are the options of every example: sent on time. The examples
+// carry the premises POS1, the device 1 and Invopop's OIB as the operator.
 func testOptions() *Options {
-	return &Options{Premises: "POS1", Device: "1", OperatorOIB: invopopOIB}
+	return new(Options)
 }
 
 // testKey is a fixed RSA key, used only by tests, so that the ZKI of an
@@ -226,6 +230,18 @@ func TestIssueTimeInClockChange(t *testing.T) {
 	assert.Equal(t, zki, r.ZKI)
 }
 
+// An invoice issued at midnight is valid and converts: 00:00:00 is the zero
+// value of cal.Time, but not a missing time.
+func TestIssueTimeAtMidnight(t *testing.T) {
+	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
+	inv.IssueTime = cal.NewTime(0, 0, 0)
+	require.NoError(t, inv.Calculate())
+	require.NoError(t, rules.Validate(inv))
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	assert.Equal(t, "T00:00:00", r.IssuedAt[len(r.IssuedAt)-9:])
+}
+
 // The exempt total keeps its cents.
 func TestExemptCents(t *testing.T) {
 	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
@@ -240,111 +256,143 @@ func TestExemptCents(t *testing.T) {
 	assert.Equal(t, "10.65", r.Total)
 }
 
-func TestOptions(t *testing.T) {
+func TestAddonExtensions(t *testing.T) {
 	key := testKey(t)
-	env := loadExample(t, "cash-prices-include-vat.json")
-	opts := testOptions()
-	opts.SequenceScope = SequenceDevice
-	opts.NotInVATSystem = true
-	opts.LateDelivery = true
-	opts.HandwrittenNumber = "123/458/5"
-	r, err := NewInvoice(env, opts, key)
+	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
+	inv.Tax.Ext = inv.Tax.Ext.
+		Set(fiskal.ExtKeySequenceScope, fiskal.SequenceDevice).
+		Set(fiskal.ExtKeyPaperNumber, "123/458/5")
+	inv.Supplier.Ext = inv.Supplier.Ext.Set(fiskal.ExtKeyVATSystem, fiskal.VATSystemOut)
+	r, err := FromInvoice(inv, testOptions(), key)
 	require.NoError(t, err)
 	assert.Equal(t, SequenceDevice, r.SequenceScope)
 	assert.False(t, r.InVATSystem)
-	assert.True(t, r.LateDelivery)
 	assert.Equal(t, "123/458/5", r.HandwrittenNumber)
+	assert.True(t, r.LateDelivery, "an invoice from the paper book is always late")
 }
 
+// A small taxpayer is exempt from VAT (Art. 90(1) of the VAT Act), so its
+// sales are reported as the exempt amount, with no VAT breakdown. The amount
+// has cents, which the exempt total once rounded away.
+func TestSmallTaxpayer(t *testing.T) {
+	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
+	inv.Supplier.Ext = inv.Supplier.Ext.Set(fiskal.ExtKeyVATSystem, fiskal.VATSystemOut)
+	inv.Tax.PricesInclude = ""
+	for _, l := range inv.Lines {
+		l.Taxes = tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt}}
+	}
+	require.NoError(t, inv.Calculate())
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	assert.False(t, r.InVATSystem)
+	assert.Empty(t, r.VAT)
+	assert.Empty(t, r.VATExemptAmount)
+	assert.Empty(t, r.NotSubjectAmount)
+	assert.Equal(t, "10.65", r.Total)
+}
+
+// A small taxpayer's invoice has only its total, whichever VAT key its
+// lines use: CIS gets no breakdown from an issuer outside the VAT system.
+func TestSmallTaxpayerSendsOnlyTheTotal(t *testing.T) {
+	for _, key := range []cbc.Key{tax.KeyExempt, tax.KeyOutsideScope, tax.KeyZero} {
+		t.Run(key.String(), func(t *testing.T) {
+			inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
+			inv.Supplier.Ext = inv.Supplier.Ext.Set(fiskal.ExtKeyVATSystem, fiskal.VATSystemOut)
+			inv.Tax.PricesInclude = ""
+			for _, l := range inv.Lines {
+				l.Taxes = tax.Set{{Category: tax.CategoryVAT, Key: key}}
+			}
+			require.NoError(t, inv.Calculate())
+			require.NoError(t, rules.Validate(inv))
+			r, err := FromInvoice(inv, testOptions(), testKey(t))
+			require.NoError(t, err)
+			assert.Empty(t, r.VAT)
+			assert.Empty(t, r.VATExemptAmount)
+			assert.Empty(t, r.NotSubjectAmount)
+			assert.Equal(t, "10.65", r.Total)
+		})
+	}
+}
+
+// An exempt line and an outside-scope line are reported apart, each with
+// its cents.
+func TestExemptAndOutsideScope(t *testing.T) {
+	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
+	inv.Lines[0].Taxes = tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt}}
+	inv.Lines[1].Taxes = tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyOutsideScope}}
+	require.NoError(t, inv.Calculate())
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	assert.Empty(t, r.VAT)
+	assert.Equal(t, "5.00", r.VATExemptAmount)
+	assert.Equal(t, "5.65", r.NotSubjectAmount)
+	assert.Equal(t, "10.65", r.Total)
+}
+
+// TestAnotherCurrency checks that an invoice in another currency is sent to
+// CIS in euros, converted with its exchange rate, and that the caller's
+// invoice keeps its currency.
+func TestAnotherCurrency(t *testing.T) {
+	inv := loadExample(t, "business-buyer-card.json").Extract().(*bill.Invoice)
+	inv.Currency = "USD"
+	inv.ExchangeRates = []*currency.ExchangeRate{{From: "USD", To: "EUR", Amount: num.MakeAmount(875, 3)}}
+	require.NoError(t, inv.Calculate())
+	require.NoError(t, rules.Validate(inv))
+
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	// USD 100.00 at 0.875 is EUR 87.50; 5 % VAT on it is EUR 4.38.
+	assert.Equal(t, []*Tax{{Rate: "5.00", Base: "87.50", Amount: "4.38"}}, r.VAT)
+	assert.Equal(t, "91.88", r.Total)
+	assert.Equal(t, currency.Code("USD"), inv.Currency)
+	assert.Equal(t, "105.00", inv.Totals.Payable.String())
+}
+
+func TestLateDelivery(t *testing.T) {
+	r, err := NewInvoice(loadExample(t, "cash-prices-include-vat.json"), &Options{LateDelivery: true}, testKey(t))
+	require.NoError(t, err)
+	assert.True(t, r.LateDelivery)
+	assert.Empty(t, r.HandwrittenNumber)
+}
+
+func TestBuyerOIBNotWithTransfer(t *testing.T) {
+	inv := loadExample(t, "business-buyer-card.json").Extract().(*bill.Invoice)
+	inv.Payment.Instructions.Key = pay.MeansKeyCreditTransfer
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	assert.Equal(t, PaymentTransfer, r.PaymentMethod)
+	assert.Empty(t, r.BuyerOIB)
+}
+
+// TestErrors covers what the conversion refuses: an input that breaks its
+// contract in a way the addon rules can't see, and a technical failure.
+// The addon rules check the invoice's content, in addon/fiskal.
 func TestErrors(t *testing.T) {
 	key := testKey(t)
 	tests := []struct {
 		name string
 		inv  func(*bill.Invoice)
-		opts func(*Options)
 		err  error
 		msg  string
 	}{
-		{name: "no issue time", inv: func(i *bill.Invoice) { i.IssueTime = nil }, err: ErrMissing, msg: "issue time"},
-		{name: "a code with a series", inv: func(i *bill.Invoice) { i.Code = "R-1001" }, err: ErrInvalid, msg: "invoice code"},
-		{name: "a code with a leading zero", inv: func(i *bill.Invoice) { i.Code = "01001" }, err: ErrInvalid, msg: "invoice code"},
-		{name: "a foreign supplier", inv: func(i *bill.Invoice) { i.Supplier.TaxID.Country = "SI" }, err: ErrInvalid, msg: "the issuer must be Croatian"},
-		{name: "a credit note", inv: func(i *bill.Invoice) { i.Type = bill.InvoiceTypeCreditNote }, err: ErrUnsupported, msg: "credit-note"},
-		{name: "another currency", inv: func(i *bill.Invoice) { i.Currency = "USD" }, err: ErrInvalid, msg: "euros"},
-		{name: "not calculated", inv: func(i *bill.Invoice) { i.Totals = nil }, err: ErrMissing, msg: "calculate"},
-		{name: "no premises", opts: func(o *Options) { o.Premises = "" }, err: ErrMissing, msg: "premises"},
-		{name: "a premises label with a dash", opts: func(o *Options) { o.Premises = "POS-1" }, err: ErrInvalid, msg: "premises"},
-		{name: "no device", opts: func(o *Options) { o.Device = "" }, err: ErrMissing, msg: "device"},
-		{name: "a device label with letters", opts: func(o *Options) { o.Device = "T1" }, err: ErrInvalid, msg: "device"},
-		{name: "no operator", opts: func(o *Options) { o.OperatorOIB = "" }, err: ErrMissing, msg: "operator"},
-		{name: "a short operator OIB", opts: func(o *Options) { o.OperatorOIB = "1234" }, err: ErrInvalid, msg: "operator"},
-		{name: "an unknown sequence scope", opts: func(o *Options) { o.SequenceScope = "X" }, err: ErrInvalid, msg: "sequence scope"},
+		{name: "no code", inv: func(i *bill.Invoice) { i.Code = "" }, err: ErrMissing, msg: "invoice code"},
+		{name: "no addon", inv: func(i *bill.Invoice) { i.Addons = tax.Addons{} }, err: ErrMissing, msg: "hr-fiskal-b2c-v1"},
+		{name: "another currency without an exchange rate", inv: func(i *bill.Invoice) { i.Currency = "USD" }, err: ErrInvalid, msg: "CIS receives euros"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			env := loadExample(t, "cash-prices-include-vat.json")
 			inv := env.Extract().(*bill.Invoice)
-			opts := testOptions()
-			if tt.inv != nil {
-				tt.inv(inv)
-			}
-			if tt.opts != nil {
-				tt.opts(opts)
-			}
-			_, err := FromInvoice(inv, opts, key)
+			tt.inv(inv)
+			_, err := FromInvoice(inv, testOptions(), key)
 			require.ErrorIs(t, err, tt.err)
 			assert.ErrorContains(t, err, tt.msg)
 		})
 	}
 
-	t.Run("a charge without taxes", func(t *testing.T) {
-		inv := withCharges(t, []*bill.Charge{{Amount: num.MakeAmount(10, 2), Reason: "Povratna naknada"}}, nil)
-		_, err := FromInvoice(inv, testOptions(), key)
-		require.ErrorIs(t, err, ErrUnsupported)
-		assert.ErrorContains(t, err, "Povratna naknada")
-	})
-	for _, c := range eracunPassThroughTaxCategories {
-		t.Run("HR tax category "+c.String(), func(t *testing.T) {
-			exempt := tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt, Ext: tax.ExtensionsOf(cbc.CodeMap{extKeyEracunTaxCategory: c})}}
-			inv := withCharges(t, []*bill.Charge{{Amount: num.MakeAmount(30, 2), Reason: "Fee", Taxes: exempt}}, nil)
-			_, err := FromInvoice(inv, testOptions(), key)
-			require.ErrorIs(t, err, ErrUnsupported)
-			assert.ErrorContains(t, err, `HR tax category "`+c.String()+`"`)
-		})
-	}
-	t.Run("a discount without taxes", func(t *testing.T) {
-		inv := withCharges(t, nil, []*bill.Discount{{Amount: num.MakeAmount(10, 2), Reason: "Promo"}})
-		_, err := FromInvoice(inv, testOptions(), key)
-		require.ErrorIs(t, err, ErrUnsupported)
-		assert.ErrorContains(t, err, "Promo")
-	})
-	t.Run("a rounding amount", func(t *testing.T) {
-		inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-		rounding := num.MakeAmount(-5, 2)
-		inv.Totals.Rounding = &rounding
-		require.NoError(t, inv.Calculate())
-		require.Equal(t, "10.60", inv.Totals.Payable.String())
-		_, err := FromInvoice(inv, testOptions(), key)
-		require.ErrorIs(t, err, ErrUnsupported)
-		assert.ErrorContains(t, err, "rounding -0.05")
-	})
 	t.Run("not an invoice", func(t *testing.T) {
 		_, err := NewInvoice(nil, testOptions(), key)
 		assert.ErrorIs(t, err, ErrNotInvoice)
-	})
-	t.Run("a reverse charge", func(t *testing.T) {
-		env := loadExample(t, "business-buyer-card.json")
-		inv := env.Extract().(*bill.Invoice)
-		inv.Totals.Taxes.Categories[0].Rates[0].Key = "reverse-charge"
-		_, err := FromInvoice(inv, testOptions(), key)
-		assert.ErrorIs(t, err, ErrUnsupported)
-	})
-	t.Run("an issue time ZKI needs", func(t *testing.T) {
-		env := loadExample(t, "cash-prices-include-vat.json")
-		inv := env.Extract().(*bill.Invoice)
-		inv.IssueTime = cal.NewTime(0, 0, 0)
-		_, err := FromInvoice(inv, testOptions(), key)
-		assert.ErrorIs(t, err, ErrMissing)
 	})
 }
 
