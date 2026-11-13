@@ -196,6 +196,9 @@ func TestInvoiceRules(t *testing.T) {
 		}, "12"},
 		{"supplier with no VAT number and no OIB identity", func(inv *bill.Invoice) { inv.Supplier.TaxID.Code = "" }, "13"},
 		{"supplier with no tax ID", func(inv *bill.Invoice) { outsideVAT(inv); inv.Supplier.TaxID = nil }, "11"},
+		{"supplier OIB identity that differs from its VAT number", func(inv *bill.Invoice) {
+			inv.Supplier.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: "12345678903"}}
+		}, "25"},
 		{"no operator", func(inv *bill.Invoice) { inv.Supplier.People = nil }, "14"},
 		{"two operators", func(inv *bill.Invoice) {
 			inv.Supplier.People = append(inv.Supplier.People, inv.Supplier.People[0])

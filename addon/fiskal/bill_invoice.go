@@ -166,6 +166,9 @@ func billInvoiceRules() *rules.Set {
 			rules.Assert("13", "invoice supplier requires an OIB: a Croatian VAT number, or with no VAT number an identity of type OIB (Oib)",
 				is.Func("has OIB", partyHasOIB),
 			),
+			rules.Assert("25", "invoice supplier identity of type OIB must match its Croatian VAT number (Oib)",
+				is.Func("OIB matches VAT number", partyOIBMatchesVATNumber),
+			),
 			rules.Field("people",
 				rules.Assert("14", "invoice supplier requires exactly one person with the operator key: the person at the till, or the supplier for a self-service device (OibOper)",
 					is.Func("has one operator", peopleHaveOneOperator),
@@ -334,6 +337,21 @@ func partyHasOIB(val any) bool {
 		return true
 	}
 	return PartyOIB(p) != cbc.CodeEmpty
+}
+
+// partyOIBMatchesVATNumber says whether a party with both a Croatian VAT
+// number and an OIB identity has the same OIB in each. PartyOIB reads only
+// the VAT number then, so a typo in either would go unnoticed.
+func partyOIBMatchesVATNumber(val any) bool {
+	p, ok := val.(*org.Party)
+	if !ok || !PartyHasVATNumber(p) || p.TaxID.Country != l10n.HR.Tax() {
+		return true
+	}
+	id := org.IdentityForType(p.Identities, hr.IdentityTypeOIB)
+	if id == nil {
+		return true
+	}
+	return NormalizeOIB(id.Code.String()) == PartyOIB(p)
 }
 
 func seriesMatchesScope(val any) bool {
