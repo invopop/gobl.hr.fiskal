@@ -422,3 +422,15 @@ func TestSupplierFaults(t *testing.T) {
 		assert.Empty(t, inv.Tax.Notes)
 	})
 }
+
+// TestSupplierOIBIdentityMatchesVATNumber checks that a supplier in the VAT
+// system may also give its OIB as an identity, here written with the HR
+// prefix of its VAT number.
+func TestSupplierOIBIdentityMatchesVATNumber(t *testing.T) {
+	inv := testInvoice()
+	inv.Supplier.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: "HR " + supplierOIB}}
+	require.NoError(t, inv.Calculate())
+	require.NoError(t, rules.Validate(inv))
+	assert.True(t, fiskal.PartyHasVATNumber(inv.Supplier))
+	assert.Equal(t, cbc.Code(supplierOIB), fiskal.PartyOIB(inv.Supplier))
+}
