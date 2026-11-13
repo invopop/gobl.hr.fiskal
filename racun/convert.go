@@ -23,6 +23,7 @@ import (
 	"github.com/invopop/gobl/cal"
 	"github.com/invopop/gobl/cbc"
 	"github.com/invopop/gobl/currency"
+	"github.com/invopop/gobl/l10n"
 	"github.com/invopop/gobl/num"
 	"github.com/invopop/gobl/org"
 	"github.com/invopop/gobl/pay"
@@ -299,7 +300,14 @@ func meansMethod(k cbc.Key) PaymentMethod {
 
 // buyerOIB is the customer's OIB, for an invoice to a Croatian business: its
 // Croatian VAT number, or the OIB identity of a business outside the VAT
-// system. It is mandatory for one paid in cash or by card (§2.1.1.1).
+// system, whose tax ID has only the country HR. It is mandatory for one paid
+// in cash or by card (§2.1.1.1). CIS takes it only for a B2B invoice, so a
+// customer without a Croatian tax ID, such as a private person with an OIB
+// identity, has none.
 func buyerOIB(inv *bill.Invoice) string {
-	return fiskal.PartyOIB(inv.Customer).String()
+	c := inv.Customer
+	if c == nil || c.TaxID == nil || c.TaxID.Country != l10n.HR.Tax() {
+		return ""
+	}
+	return fiskal.PartyOIB(c).String()
 }

@@ -499,3 +499,20 @@ func TestBuyerOIBFromIdentity(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "12345678903", r.BuyerOIB)
 }
+
+// A private person has no tax ID, so its OIB identity is not sent: CIS takes
+// the buyer's OIB only for a B2B invoice.
+func TestPrivateBuyerOIB(t *testing.T) {
+	env := loadExample(t, "cash-prices-include-vat.json")
+	inv := env.Extract().(*bill.Invoice)
+	inv.Customer = &org.Party{
+		Name:       "Ivana Horvat",
+		Identities: []*org.Identity{{Type: hr.IdentityTypeOIB, Code: "12345678903"}},
+	}
+	require.NoError(t, env.Calculate())
+	require.NoError(t, env.Validate())
+
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	assert.Empty(t, r.BuyerOIB)
+}
