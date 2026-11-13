@@ -376,7 +376,6 @@ func TestErrors(t *testing.T) {
 		msg  string
 	}{
 		{name: "no code", inv: func(i *bill.Invoice) { i.Code = "" }, err: ErrMissing, msg: "invoice code"},
-		{name: "no issue time", inv: func(i *bill.Invoice) { i.IssueTime = nil }, err: ErrMissing, msg: "invoice issue time"},
 		{name: "no addon", inv: func(i *bill.Invoice) { i.Addons = tax.Addons{} }, err: ErrMissing, msg: "hr-fiskal-b2c-v1"},
 		{name: "another currency without an exchange rate", inv: func(i *bill.Invoice) { i.Currency = "USD" }, err: ErrInvalid, msg: "CIS receives euros"},
 	}
