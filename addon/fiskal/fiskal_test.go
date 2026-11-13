@@ -83,7 +83,10 @@ func TestInvoiceValid(t *testing.T) {
 	require.NoError(t, inv.Calculate())
 	require.NoError(t, rules.Validate(inv))
 	assert.Equal(t, fiskal.SequencePremises, inv.Tax.Ext.Get(fiskal.ExtKeySequenceScope))
-	assert.Equal(t, fiskal.VATSystemIn, inv.Supplier.Ext.Get(fiskal.ExtKeyVATSystem))
+	assert.True(t, fiskal.PartyHasVATNumber(inv.Supplier))
+	assert.Equal(t, cbc.Code(supplierOIB), fiskal.PartyOIB(inv.Supplier))
+	assert.Empty(t, inv.Supplier.Identities, "the OIB stays in the VAT number")
+	assert.Empty(t, inv.Supplier.Ext)
 	assert.Empty(t, inv.Tax.Notes)
 }
 
@@ -99,7 +102,7 @@ func TestNormalizeKeepsExtensions(t *testing.T) {
 // its line exempt.
 func smallTaxpayer() *bill.Invoice {
 	inv := testInvoice()
-	inv.Supplier.Ext = tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyVATSystem: fiskal.VATSystemOut})
+	outsideVAT(inv)
 	inv.Lines[0].Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyExempt}
 	return inv
 }
@@ -109,7 +112,9 @@ func TestSmallTaxpayer(t *testing.T) {
 		inv := smallTaxpayer()
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
-		assert.Equal(t, fiskal.VATSystemOut, inv.Supplier.Ext.Get(fiskal.ExtKeyVATSystem))
+		assert.False(t, fiskal.PartyHasVATNumber(inv.Supplier))
+		assert.Equal(t, cbc.Code(supplierOIB), fiskal.PartyOIB(inv.Supplier))
+		assert.Equal(t, "HR", inv.GetRegime().String(), "a tax ID with only the country keeps the regime")
 		require.Len(t, inv.Tax.Notes, 1)
 		assert.Equal(t, tax.KeyExempt, inv.Tax.Notes[0].Key)
 		assert.Equal(t, fiskal.NoteSmallTaxpayer, inv.Tax.Notes[0].Text)
@@ -186,13 +191,11 @@ func TestInvoiceRules(t *testing.T) {
 		{"device with a leading zero", func(inv *bill.Invoice) { inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeyDevice, "01") }, "07"},
 		{"another currency without an exchange rate", func(inv *bill.Invoice) { inv.Currency = "USD" }, "03"},
 		{"unknown sequence scope", func(inv *bill.Invoice) { inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeySequenceScope, "X") }, "08"},
-		{"unknown VAT system", func(inv *bill.Invoice) {
-			inv.Supplier.Ext = tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyVATSystem: "X"})
-		}, "09"},
 		{"foreign supplier", func(inv *bill.Invoice) {
 			inv.Supplier.TaxID = &tax.Identity{Country: "SI", Code: "92950663"}
 		}, "12"},
-		{"supplier without a tax ID code", func(inv *bill.Invoice) { inv.Supplier.TaxID.Code = "" }, "13"},
+		{"supplier with no VAT number and no OIB identity", func(inv *bill.Invoice) { inv.Supplier.TaxID.Code = "" }, "13"},
+		{"supplier with no tax ID", func(inv *bill.Invoice) { outsideVAT(inv); inv.Supplier.TaxID = nil }, "11"},
 		{"no operator", func(inv *bill.Invoice) { inv.Supplier.People = nil }, "14"},
 		{"two operators", func(inv *bill.Invoice) {
 			inv.Supplier.People = append(inv.Supplier.People, inv.Supplier.People[0])
@@ -207,9 +210,7 @@ func TestInvoiceRules(t *testing.T) {
 			inv.Discounts = []*bill.Discount{{Amount: num.MakeAmount(10, 2), Reason: "Promo"}}
 		}, "22"},
 		{"a line without taxes", func(inv *bill.Invoice) { inv.Lines[0].Taxes = nil }, "23"},
-		{"VAT outside the VAT system", func(inv *bill.Invoice) {
-			inv.Supplier.Ext = tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyVATSystem: fiskal.VATSystemOut})
-		}, "16"},
+		{"VAT outside the VAT system", func(inv *bill.Invoice) { outsideVAT(inv) }, "16"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -362,4 +363,59 @@ func TestNotAnEracun(t *testing.T) {
 	inv := testInvoice()
 	inv.Addons = tax.WithAddons(fiskal.V1, eracunStandIn)
 	assertFault(t, inv, faultCode("24"))
+}
+
+// outsideVAT makes the supplier one outside the VAT system: a tax ID with
+// only the country HR, and its OIB as an identity.
+func outsideVAT(inv *bill.Invoice) {
+	inv.Supplier.TaxID = &tax.Identity{Country: "HR"}
+	inv.Supplier.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: supplierOIB}}
+}
+
+// TestPartyOIB checks where the issuer's OIB comes from: the Croatian VAT
+// number, or else the OIB identity.
+func TestPartyOIB(t *testing.T) {
+	oib := func(code cbc.Code) []*org.Identity { return []*org.Identity{{Type: hr.IdentityTypeOIB, Code: code}} }
+	tests := []struct {
+		name  string
+		party *org.Party
+		want  cbc.Code
+	}{
+		{"no party", nil, ""},
+		{"VAT number", &org.Party{TaxID: &tax.Identity{Country: "HR", Code: "HR80432461483"}}, "80432461483"},
+		{"OIB identity with no VAT number", &org.Party{TaxID: &tax.Identity{Country: "HR"}, Identities: oib("HR 80432461483")}, "80432461483"},
+		{"VAT number before the OIB identity", &org.Party{TaxID: &tax.Identity{Country: "HR", Code: "80432461483"}, Identities: oib("12345678903")}, "80432461483"},
+		{"foreign VAT number", &org.Party{TaxID: &tax.Identity{Country: "SI", Code: "92950663"}}, ""},
+		{"neither", &org.Party{TaxID: &tax.Identity{Country: "HR"}}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, fiskal.PartyOIB(tt.party))
+		})
+	}
+}
+
+// TestSupplierFaults checks that one mistake in the supplier's tax ID gives
+// one fault: a foreign tax ID is not also missing an OIB, and a missing tax
+// ID is not taken for a supplier outside the VAT system.
+func TestSupplierFaults(t *testing.T) {
+	t.Run("foreign tax ID", func(t *testing.T) {
+		inv := testInvoice()
+		inv.Supplier.TaxID = &tax.Identity{Country: "SI", Code: "92950663"}
+		require.NoError(t, inv.Calculate())
+		faults := rules.Validate(inv)
+		require.Error(t, faults)
+		assert.True(t, faults.HasCode(faultCode("12")), "got %s", faults)
+		assert.False(t, faults.HasCode(faultCode("13")), "got %s", faults)
+	})
+	t.Run("no tax ID", func(t *testing.T) {
+		inv := testInvoice()
+		inv.Supplier.TaxID = nil
+		require.NoError(t, inv.Calculate())
+		faults := rules.Validate(inv)
+		require.Error(t, faults)
+		assert.True(t, faults.HasCode(faultCode("11")), "got %s", faults)
+		assert.False(t, faults.HasCode(faultCode("16")), "got %s", faults)
+		assert.Empty(t, inv.Tax.Notes)
+	})
 }

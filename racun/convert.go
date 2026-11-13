@@ -23,7 +23,6 @@ import (
 	"github.com/invopop/gobl/cal"
 	"github.com/invopop/gobl/cbc"
 	"github.com/invopop/gobl/currency"
-	"github.com/invopop/gobl/l10n"
 	"github.com/invopop/gobl/num"
 	"github.com/invopop/gobl/org"
 	"github.com/invopop/gobl/pay"
@@ -91,7 +90,7 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 		return nil, err
 	}
 
-	r.IssuerOIB = inv.Supplier.TaxID.Code.String()
+	r.IssuerOIB = fiskal.PartyOIB(inv.Supplier).String()
 	issuedAt := issueTime(inv)
 	r.IssuedAt = formatDateTime(issuedAt, "T")
 	ext := inv.Tax.Ext
@@ -100,7 +99,7 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 	if ext.Get(fiskal.ExtKeySequenceScope) == fiskal.SequenceDevice {
 		r.SequenceScope = SequenceDevice
 	}
-	r.InVATSystem = inv.Supplier.Ext.Get(fiskal.ExtKeyVATSystem) != fiskal.VATSystemOut
+	r.InVATSystem = fiskal.PartyHasVATNumber(inv.Supplier)
 	addTaxes(r, inv)
 	if !r.InVATSystem {
 		dropVATBreakdown(r)
@@ -298,12 +297,9 @@ func meansMethod(k cbc.Key) PaymentMethod {
 	return PaymentOther
 }
 
-// buyerOIB is the customer's OIB, for an invoice to a Croatian business. It
-// is mandatory for one paid in cash or by card (§2.1.1.1).
+// buyerOIB is the customer's OIB, for an invoice to a Croatian business: its
+// Croatian VAT number, or the OIB identity of a business outside the VAT
+// system. It is mandatory for one paid in cash or by card (§2.1.1.1).
 func buyerOIB(inv *bill.Invoice) string {
-	c := inv.Customer
-	if c == nil || c.TaxID == nil || c.TaxID.Country != l10n.HR.Tax() {
-		return ""
-	}
-	return c.TaxID.Code.String()
+	return fiskal.PartyOIB(inv.Customer).String()
 }
