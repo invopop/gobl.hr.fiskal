@@ -60,9 +60,6 @@ func normalizeInvoice(inv *bill.Invoice) {
 	if !inv.Tax.Ext.Has(ExtKeySequenceScope) {
 		inv.Tax.Ext = inv.Tax.Ext.Set(ExtKeySequenceScope, SequencePremises)
 	}
-	if inv.Supplier != nil && !inv.Supplier.Ext.Has(ExtKeyVATSystem) {
-		inv.Supplier.Ext = inv.Supplier.Ext.Set(ExtKeyVATSystem, VATSystemIn)
-	}
 	if inv.Series == cbc.CodeEmpty {
 		inv.Series = Series(inv.Tax.Ext)
 	}
@@ -160,19 +157,14 @@ func billInvoiceRules() *rules.Set {
 			),
 		),
 		rules.Field("supplier",
-			rules.Field("ext",
-				rules.Assert("09", fmt.Sprintf("invoice supplier ext %s must be Y or N (USustPdv)", ExtKeyVATSystem),
-					tax.ExtensionHasValidCode(ExtKeyVATSystem),
-				),
-			),
 			rules.Field("tax_id",
-				rules.Assert("11", "invoice supplier tax ID is required: the issuer's OIB (Oib)", is.Present),
+				rules.Assert("11", "invoice supplier tax ID is required, with country HR: its code is the VAT number, left out by a supplier outside the VAT system (USustPdv)", is.Present),
 				rules.Field("country",
 					rules.Assert("12", "invoice supplier tax ID must be Croatian (Oib)", is.In(l10n.HR.Tax())),
 				),
-				rules.Field("code",
-					rules.Assert("13", "invoice supplier tax ID code is required: the issuer's OIB (Oib)", is.Present),
-				),
+			),
+			rules.Assert("13", "invoice supplier requires an OIB: a Croatian VAT number, or with no VAT number an identity of type OIB (Oib)",
+				is.Func("has OIB", partyHasOIB),
 			),
 			rules.Field("people",
 				rules.Assert("14", "invoice supplier requires exactly one person with the operator key: the person at the till, or the supplier for a self-service device (OibOper)",
@@ -194,7 +186,7 @@ func billInvoiceRules() *rules.Set {
 		// must not show VAT anyway (Art. 90.g of the VAT Act).
 		rules.When(is.Func("outside the VAT system", outsideVATSystem),
 			rules.Field("totals",
-				rules.Assert("16", fmt.Sprintf("invoice from a supplier outside the VAT system (%s %s) must not charge VAT: CIS receives only its total (Art. 90.g of the VAT Act)", ExtKeyVATSystem, VATSystemOut),
+				rules.Assert("16", "invoice from a supplier with no VAT number (supplier tax ID code), outside the VAT system, must not charge VAT: CIS receives only its total (Art. 90.g of the VAT Act)",
 					is.Func("charges no VAT", totalsChargeNoVAT),
 				),
 			),
@@ -334,6 +326,16 @@ func identitiesHaveOIB(val any) bool {
 	return org.IdentityForType(ids, hr.IdentityTypeOIB) != nil
 }
 
+// partyHasOIB is true when the party has an OIB, or a foreign tax ID, which
+// rule 12 refuses on its own.
+func partyHasOIB(val any) bool {
+	p, ok := val.(*org.Party)
+	if !ok || p == nil || (p.TaxID != nil && p.TaxID.Country != l10n.HR.Tax()) {
+		return true
+	}
+	return PartyOIB(p) != cbc.CodeEmpty
+}
+
 func seriesMatchesScope(val any) bool {
 	inv, ok := val.(*bill.Invoice)
 	if !ok || inv == nil || inv.Tax == nil || inv.Series == cbc.CodeEmpty {
@@ -349,7 +351,7 @@ func notEracun(val any) bool {
 
 func outsideVATSystem(val any) bool {
 	inv, ok := val.(*bill.Invoice)
-	return ok && inv != nil && inv.Supplier != nil && inv.Supplier.Ext.Get(ExtKeyVATSystem) == VATSystemOut
+	return ok && inv != nil && partyOutsideVAT(inv.Supplier)
 }
 
 // totalsChargeNoVAT is true when no VAT rate in the totals has a percentage

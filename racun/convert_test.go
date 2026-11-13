@@ -22,7 +22,9 @@ import (
 	"github.com/invopop/gobl/cbc"
 	"github.com/invopop/gobl/currency"
 	"github.com/invopop/gobl/num"
+	"github.com/invopop/gobl/org"
 	"github.com/invopop/gobl/pay"
+	"github.com/invopop/gobl/regimes/hr"
 	"github.com/invopop/gobl/rules"
 	"github.com/invopop/gobl/tax"
 	"github.com/stretchr/testify/assert"
@@ -262,7 +264,7 @@ func TestAddonExtensions(t *testing.T) {
 	inv.Tax.Ext = inv.Tax.Ext.
 		Set(fiskal.ExtKeySequenceScope, fiskal.SequenceDevice).
 		Set(fiskal.ExtKeyPaperNumber, "123/458/5")
-	inv.Supplier.Ext = inv.Supplier.Ext.Set(fiskal.ExtKeyVATSystem, fiskal.VATSystemOut)
+	outsideVAT(inv)
 	r, err := FromInvoice(inv, testOptions(), key)
 	require.NoError(t, err)
 	assert.Equal(t, SequenceDevice, r.SequenceScope)
@@ -276,7 +278,7 @@ func TestAddonExtensions(t *testing.T) {
 // has cents, which the exempt total once rounded away.
 func TestSmallTaxpayer(t *testing.T) {
 	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-	inv.Supplier.Ext = inv.Supplier.Ext.Set(fiskal.ExtKeyVATSystem, fiskal.VATSystemOut)
+	outsideVAT(inv)
 	inv.Tax.PricesInclude = ""
 	for _, l := range inv.Lines {
 		l.Taxes = tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt}}
@@ -297,7 +299,7 @@ func TestSmallTaxpayerSendsOnlyTheTotal(t *testing.T) {
 	for _, key := range []cbc.Key{tax.KeyExempt, tax.KeyOutsideScope, tax.KeyZero} {
 		t.Run(key.String(), func(t *testing.T) {
 			inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-			inv.Supplier.Ext = inv.Supplier.Ext.Set(fiskal.ExtKeyVATSystem, fiskal.VATSystemOut)
+			outsideVAT(inv)
 			inv.Tax.PricesInclude = ""
 			for _, l := range inv.Lines {
 				l.Taxes = tax.Set{{Category: tax.CategoryVAT, Key: key}}
@@ -477,4 +479,23 @@ func fixedCertificate(t *testing.T) *Certificate {
 	cert, err := x509.ParseCertificate(der)
 	require.NoError(t, err)
 	return &Certificate{Cert: cert, Key: key}
+}
+
+// outsideVAT makes the supplier one outside the VAT system: a tax ID with
+// only the country HR, and its OIB as an identity.
+func outsideVAT(inv *bill.Invoice) {
+	oib := inv.Supplier.TaxID.Code
+	inv.Supplier.TaxID = &tax.Identity{Country: "HR"}
+	inv.Supplier.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: oib}}
+}
+
+// A Croatian business buyer outside the VAT system has only an OIB
+// identity, which is sent as its OIB.
+func TestBuyerOIBFromIdentity(t *testing.T) {
+	inv := loadExample(t, "business-buyer-card.json").Extract().(*bill.Invoice)
+	inv.Customer.TaxID = &tax.Identity{Country: "HR"}
+	inv.Customer.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: "12345678903"}}
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	assert.Equal(t, "12345678903", r.BuyerOIB)
 }
