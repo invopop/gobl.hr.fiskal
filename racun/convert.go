@@ -91,7 +91,7 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 		return nil, err
 	}
 
-	r.IssuerOIB = inv.Supplier.TaxID.Code.String()
+	r.IssuerOIB = fiskal.PartyOIB(inv.Supplier).String()
 	issuedAt := issueTime(inv)
 	r.IssuedAt = formatDateTime(issuedAt, "T")
 	ext := inv.Tax.Ext
@@ -100,7 +100,7 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 	if ext.Get(fiskal.ExtKeySequenceScope) == fiskal.SequenceDevice {
 		r.SequenceScope = SequenceDevice
 	}
-	r.InVATSystem = inv.Supplier.Ext.Get(fiskal.ExtKeyVATSystem) != fiskal.VATSystemOut
+	r.InVATSystem = fiskal.PartyHasVATNumber(inv.Supplier)
 	addTaxes(r, inv)
 	if !r.InVATSystem {
 		dropVATBreakdown(r)
@@ -295,12 +295,16 @@ func meansMethod(k cbc.Key) PaymentMethod {
 	return PaymentOther
 }
 
-// buyerOIB is the customer's OIB, for an invoice to a Croatian business. It
-// is mandatory for one paid in cash or by card (§2.1.1.1).
+// buyerOIB is the customer's OIB, for an invoice to a Croatian business: its
+// Croatian VAT number, or the OIB identity of a business outside the VAT
+// system, whose tax ID has only the country HR. It is mandatory for one paid
+// in cash or by card (§2.1.1.1). CIS takes it only for a B2B invoice, so a
+// customer without a Croatian tax ID, such as a private person with an OIB
+// identity, has none.
 func buyerOIB(inv *bill.Invoice) string {
 	c := inv.Customer
 	if c == nil || c.TaxID == nil || c.TaxID.Country != l10n.HR.Tax() {
 		return ""
 	}
-	return c.TaxID.Code.String()
+	return fiskal.PartyOIB(c).String()
 }

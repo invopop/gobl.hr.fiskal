@@ -16,11 +16,11 @@ tax:
 
 supplier:
   name: "Obrt Kava"
-  ext:
-    hr-fiskal-vat-system: "N"
   tax_id:
     country: "HR"
-    code: "80432461483"
+  identities:
+    - type: OIB
+      code: "80432461483"
   people:
     - key: operator
       name:

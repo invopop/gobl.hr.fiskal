@@ -78,12 +78,6 @@ The `hr-fiskal-b2c-v1` addon sets these on the invoice tax:
 | `hr-fiskal-sequence-scope` | What the invoice numbers count within (`OznSlijed`): `P` per business premises (the default) or `N` per device. |
 | `hr-fiskal-paper-number` | Number of an invoice from the bound paper invoice book, entered after the till broke down (`ParagonBrRac`): up to 100 characters. Such an invoice is sent late. |
 
-The supplier party carries one more:
-
-| Key | Description |
-| --- | --- |
-| `hr-fiskal-vat-system` | Whether the supplier is in the VAT system (`USustPdv`): `Y` (the default) or `N`. A small taxpayer, exempt from VAT under Art. 90(1) of the VAT Act, is outside it: its lines use the VAT key `exempt`, and the addon adds a note citing the exemption to an invoice with exempt VAT, as Art. 79(3) requires. A supply outside the scope of VAT uses the key `outside-scope` and gets no note. `racun` sends CIS only the total of such an invoice, with no VAT breakdown: CIS checks the breakdown only for an issuer in the VAT system. |
-
 The invoice code is the bare sequential number (`BrOznRac`): digits with no
 leading zero. A printed invoice shows the number as
 `BrOznRac/OznPosPr/OznNapUr`, such as `1001/POS1/1`.
@@ -102,6 +96,35 @@ The number can come from two places:
 
 The rules refuse a series that does not match the labels, so that a counter
 never numbers two premises or two devices.
+
+## Supplier
+
+The supplier is the issuer (`Oib`), and its tax ID says whether it is in the
+VAT system (`USustPdv`). A supplier in the VAT system gives its Croatian VAT
+number. A supplier outside the VAT system, such as a small taxpayer exempt
+from VAT under Art. 90(1) of the VAT Act, has no VAT number: its `tax_id` has
+only the country, which keeps the regime, and its OIB goes in an `OIB`
+identity:
+
+```yaml
+supplier:
+  tax_id:
+    country: "HR"
+  identities:
+    - type: OIB
+      code: "80432461483"
+```
+
+A supplier outside the VAT system must not charge VAT. Its lines use the VAT
+key `exempt`, and the addon adds a note citing the exemption to an invoice
+with exempt VAT, as Art. 79(3) requires. A supply outside the scope of VAT
+uses the key `outside-scope` and gets no note. `racun` sends CIS only the
+total of such an invoice, with no VAT breakdown: CIS checks the breakdown only
+for an issuer in the VAT system.
+
+The `hr-eracun-v1` addon takes the same supplier for B2B eRačuni. This
+follows the model gobl.fr.ctc uses for French suppliers: the tax ID holds
+only a VAT number, and an identity says who the supplier is.
 
 ## Issue date and time
 

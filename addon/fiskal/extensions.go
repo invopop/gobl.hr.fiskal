@@ -6,8 +6,7 @@ import (
 	"github.com/invopop/gobl/pkg/here"
 )
 
-// Extension keys. All are set on the invoice tax (bill/tax), except
-// ExtKeyVATSystem, which is set on the supplier party (org/party).
+// Extension keys. All are set on the invoice tax (bill/tax).
 //
 // TODO: declare each extension's usage (cbc.Usage), as gobl.fr.ctc does, once
 // the hr regime branch is rebased on a GOBL release that has it.
@@ -24,11 +23,6 @@ const (
 	// (OznSlijed).
 	ExtKeySequenceScope cbc.Key = "hr-fiskal-sequence-scope"
 
-	// ExtKeyVATSystem says whether the issuer is in the VAT system
-	// (USustPdv). It is a status of the supplier, so it goes in the
-	// supplier's extensions, as Italy's it-sdi-fiscal-regime does.
-	ExtKeyVATSystem cbc.Key = "hr-fiskal-vat-system"
-
 	// ExtKeyPaperNumber is the number of an invoice from the bound paper
 	// invoice book, entered after the till broke down (ParagonBrRac).
 	ExtKeyPaperNumber cbc.Key = "hr-fiskal-paper-number"
@@ -40,14 +34,6 @@ const (
 	SequencePremises cbc.Code = "P"
 	// SequenceDevice numbers invoices per device.
 	SequenceDevice cbc.Code = "N"
-)
-
-// VAT system codes (USustPdv)
-const (
-	// VATSystemIn is an issuer in the VAT system.
-	VATSystemIn cbc.Code = "Y"
-	// VATSystemOut is an issuer outside the VAT system, who charges no VAT.
-	VATSystemOut cbc.Code = "N"
 )
 
 var extensions = []*cbc.Definition{
@@ -100,35 +86,6 @@ var extensions = []*cbc.Definition{
 			{Code: SequenceDevice, Name: i18n.String{
 				i18n.EN: "Per device",
 				i18n.HR: "Na razini naplatnog uređaja",
-			}},
-		},
-	},
-	{
-		Key: ExtKeyVATSystem,
-		Name: i18n.String{
-			i18n.EN: "Croatia Fiskal: VAT System",
-			i18n.HR: "Hrvatska fiskalizacija: U sustavu PDV-a",
-		},
-		Desc: i18n.String{
-			i18n.EN: here.Doc(`
-				Whether the supplier is in the VAT system (USustPdv): Y, the default,
-				or N. Set it on the supplier. A small taxpayer (mali porezni
-				obveznik), with a domestic turnover up to EUR 60,000, is exempt from
-				VAT under Art. 90(1) of the VAT Act and outside the VAT system: it
-				must not show VAT on its invoices (Art. 90.g). Its lines use the VAT
-				key exempt, and an invoice with exempt VAT gets a note citing the
-				exemption (Art. 79(3)). A supply outside the scope of VAT uses the
-				key outside-scope and gets no note.
-			`),
-		},
-		Values: []*cbc.Definition{
-			{Code: VATSystemIn, Name: i18n.String{
-				i18n.EN: "In the VAT system",
-				i18n.HR: "U sustavu PDV-a",
-			}},
-			{Code: VATSystemOut, Name: i18n.String{
-				i18n.EN: "Outside the VAT system",
-				i18n.HR: "Izvan sustava PDV-a",
 			}},
 		},
 	},
