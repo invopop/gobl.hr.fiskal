@@ -6,7 +6,7 @@ go 1.25.0
 // unreleased hr regime (gobl) to a branch commit. Pin it to a released
 // version (or a main pseudo-version) once it is merged; the README says what
 // the pin waits for.
-replace github.com/invopop/gobl => github.com/invopop/gobl v0.510.1-0.20261027164024-70ccde1c0e68
+replace github.com/invopop/gobl => github.com/invopop/gobl v0.512.1-0.20261118093935-d8b87c99df75
 
 require (
 	github.com/beevik/etree v1.8.1
@@ -25,7 +25,7 @@ require (
 	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/expr-lang/expr v1.17.8 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/invopop/jsonschema v0.14.0 // indirect
 	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect

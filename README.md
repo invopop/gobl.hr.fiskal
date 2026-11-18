@@ -257,7 +257,7 @@ holds `Greske` (errors), each with a code and a message.
 
 | Module | Waits for | Replaced by | Pin |
 | --- | --- | --- | --- |
-| `github.com/invopop/gobl` | the `hr` regime (branch `eu3-18-hr-regime`, which [invopop/gobl#724](https://github.com/invopop/gobl/pull/724) carries) | branch commit `70ccde1c` | the gobl release that includes it, or a `main` pseudo-version after merge |
+| `github.com/invopop/gobl` | the `hr` regime (branch `eu3-18-hr-regime`, which [invopop/gobl#724](https://github.com/invopop/gobl/pull/724) carries) | branch commit `d8b87c99` | the gobl release that includes it, or a `main` pseudo-version after merge |
 
 To follow a newer commit of the branch, run
 `go mod edit -replace=github.com/invopop/gobl=github.com/invopop/gobl@<commit>`
