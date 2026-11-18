@@ -1,10 +1,10 @@
 # A bar receipt with one drink and the consumption tax, after a real
 # receipt of 2025: 2 x 4.00, of which VAT 1.56 and PP 0.19 on a base of 6.25.
-# Drinks pay VAT and the consumption tax (PP); food pays VAT only. The menu
-# price of a drink includes both taxes, which share one base, the price
-# without VAT. GOBL can take only one tax out of a price, so each price here
-# leaves out both: the menu price / 1.28 (25 % VAT + 3 % PP), or / 1.13 for
-# food at 13 % VAT.
+# The prices are the menu prices, which include VAT and, on drinks, the
+# consumption tax (PP): both taxes share one base, the price without VAT.
+# prices_include names VAT, and each drink's PP says that its price
+# includes PP too (hr-fiskal-pp-price: included). The addon takes PP out of
+# those prices, so the total is the sum of the menu prices.
 $schema: "https://gobl.org/draft-0/bill/invoice"
 $regime: "HR"
 $addons: ["hr-fiskal-b2c-v1"]
@@ -15,6 +15,7 @@ issue_date: "2026-11-06"
 issue_time: "16:07:00"
 currency: "EUR"
 tax:
+  prices_include: VAT
   ext:
     hr-fiskal-premises: "POS1"
     hr-fiskal-device: "1"
@@ -34,16 +35,18 @@ supplier:
           code: "80432461483"
 
 lines:
-  # Pelinkovac, a herbal liqueur: 4.00 on the menu
+  # Pelinkovac, a herbal liqueur
   - quantity: 2
     item:
       name: "Pelinkovac 0,03 l"
-      price: "3.1250"
+      price: "4.00"
     taxes:
       - cat: VAT
         rate: general
       - cat: PP
         percent: "3%"
+        ext:
+          hr-fiskal-pp-price: included
 
 payment:
   advances:

@@ -63,6 +63,7 @@ func normalizeInvoice(inv *bill.Invoice) {
 	if inv.Series == cbc.CodeEmpty {
 		inv.Series = Series(inv.Tax.Ext)
 	}
+	removeIncludedPP(inv)
 }
 
 // normalizeCode removes the leading zeros of a code made only of digits,
@@ -222,6 +223,20 @@ func billInvoiceRules() *rules.Set {
 			),
 			rules.Assert("20", "invoice rounding is not supported: the invoice request has no element for it",
 				is.Func("no rounding", totalsHaveNoRounding),
+			),
+		),
+		// With prices that include VAT, a till must say whether a drink's
+		// price also includes PP: GOBL would otherwise add PP on top of a
+		// menu price that already holds it, and charge more than the menu.
+		rules.When(is.Func("prices include VAT", pricesIncludeVAT),
+			rules.Field("lines",
+				rules.Each(
+					rules.Field("taxes",
+						rules.Assert("28", fmt.Sprintf("invoice line with PP needs %s when prices include VAT: say whether the price includes PP", ExtKeyPPPrice),
+							is.Func("PP says whether the price includes it", ppStatesPrice),
+						),
+					),
+				),
 			),
 		),
 		// A charge without taxes is a fee, such as a bottle deposit, which

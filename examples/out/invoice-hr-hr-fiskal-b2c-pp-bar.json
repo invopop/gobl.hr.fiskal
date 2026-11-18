@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "5c1ccf0fb1b8f2eaf1e8dd4771305c86050a17ebdbb5a50a1631f56d58255b09"
+			"val": "f4142db127e25ec9d77c45340beffebbd1e56d596e37a49eed90bb47bdc47ab6"
 		}
 	},
 	"doc": {
@@ -21,6 +21,7 @@
 		"issue_time": "16:07:00",
 		"currency": "EUR",
 		"tax": {
+			"prices_include": "VAT",
 			"ext": {
 				"hr-fiskal-device": "1",
 				"hr-fiskal-premises": "POS1",
@@ -55,9 +56,9 @@
 				"quantity": "2",
 				"item": {
 					"name": "Pelinkovac 0,03 l",
-					"price": "3.1250"
+					"price": "3.906250"
 				},
-				"sum": "6.2500",
+				"sum": "7.812500",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -72,11 +73,12 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
+							"hr-fiskal-pp-price": "excluded",
 							"untdid-tax-category": "O"
 						}
 					}
 				],
-				"total": "6.2500"
+				"total": "7.812500"
 			}
 		],
 		"payment": {
@@ -90,7 +92,8 @@
 			]
 		},
 		"totals": {
-			"sum": "6.25",
+			"sum": "7.81",
+			"tax_included": "1.56",
 			"total": "6.25",
 			"taxes": {
 				"categories": [
@@ -114,6 +117,7 @@
 						"rates": [
 							{
 								"ext": {
+									"hr-fiskal-pp-price": "excluded",
 									"untdid-tax-category": "O"
 								},
 								"base": "6.25",

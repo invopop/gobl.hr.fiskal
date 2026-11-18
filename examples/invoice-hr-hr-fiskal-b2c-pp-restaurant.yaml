@@ -1,11 +1,11 @@
 # A restaurant receipt with drinks, food and a cover charge, after a real
 # receipt of 2025. On that receipt, the till also charged PP on the cover
 # charge; the law taxes only drinks, so here it pays VAT only.
-# Drinks pay VAT and the consumption tax (PP); food pays VAT only. The menu
-# price of a drink includes both taxes, which share one base, the price
-# without VAT. GOBL can take only one tax out of a price, so each price here
-# leaves out both: the menu price / 1.28 (25 % VAT + 3 % PP), or / 1.13 for
-# food at 13 % VAT.
+# The prices are the menu prices, which include VAT and, on drinks, the
+# consumption tax (PP): both taxes share one base, the price without VAT.
+# prices_include names VAT, and each drink's PP says that its price
+# includes PP too (hr-fiskal-pp-price: included). The addon takes PP out of
+# those prices, so the total is the sum of the menu prices.
 $schema: "https://gobl.org/draft-0/bill/invoice"
 $regime: "HR"
 $addons: ["hr-fiskal-b2c-v1"]
@@ -16,6 +16,7 @@ issue_date: "2026-11-06"
 issue_time: "20:27:53"
 currency: "EUR"
 tax:
+  prices_include: VAT
   ext:
     hr-fiskal-premises: "POS1"
     hr-fiskal-device: "1"
@@ -35,83 +36,88 @@ supplier:
           code: "80432461483"
 
 lines:
-  # Cider: 4.20 on the menu
+  # Cider
   - quantity: 1
     item:
       name: "Somersby 0,33 l"
-      price: "3.2812"
+      price: "4.20"
     taxes:
       - cat: VAT
         rate: general
       - cat: PP
         percent: "3%"
+        ext:
+          hr-fiskal-pp-price: included
 
-  # Draught beer: 4.60 on the menu
+  # Draught beer
   - quantity: 1
     item:
       name: "Točeno pivo 0,5 l"
-      price: "3.5937"
+      price: "4.60"
     taxes:
       - cat: VAT
         rate: general
       - cat: PP
         percent: "3%"
+        ext:
+          hr-fiskal-pp-price: included
 
-  # 12.90 on the menu
   - quantity: 1
     item:
       name: "BBQ burger"
-      price: "11.4159"
+      price: "12.90"
     taxes:
       - cat: VAT
         rate: reduced
 
-  # Pâté: 6.10 on the menu
+  # Pâté
   - quantity: 1
     item:
       name: "Pašteta"
-      price: "5.3982"
+      price: "6.10"
     taxes:
       - cat: VAT
         rate: reduced
 
-  # Garlic bread: 4.20 on the menu
+  # Garlic bread
   - quantity: 1
     item:
       name: "Kruh s lukom"
-      price: "3.7168"
+      price: "4.20"
     taxes:
       - cat: VAT
         rate: reduced
 
-  # Cover charge, per person: 0.50 on the menu
+  # Cover charge, per person
   - quantity: 2
     item:
       name: "Postava stola"
-      price: "0.4000"
+      price: "0.50"
     taxes:
       - cat: VAT
         rate: general
 
-  # Tuna pizza: 12.00 on the menu
+  # Tuna pizza
   - quantity: 1
     item:
       name: "Pizza tuna"
-      price: "10.6195"
+      price: "12.00"
     taxes:
       - cat: VAT
         rate: reduced
 
-  # White wine, by the litre: 20.00 on the menu
+  # White wine, by the litre
   - quantity: 0.4
     item:
       name: "Bijelo vino 1 l"
-      price: "15.6250"
+      price: "20.00"
     taxes:
       - cat: VAT
         rate: general
       - cat: PP
         percent: "3%"
+        ext:
+          hr-fiskal-pp-price: included
 
 payment:
   advances:

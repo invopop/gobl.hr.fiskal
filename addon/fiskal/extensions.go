@@ -6,7 +6,8 @@ import (
 	"github.com/invopop/gobl/pkg/here"
 )
 
-// Extension keys. All are set on the invoice tax (bill/tax).
+// Extension keys. All are set on the invoice tax (bill/tax), except
+// ExtKeyPPPrice, which is set on a tax combo.
 //
 // TODO: declare each extension's usage (cbc.Usage), as gobl.fr.ctc does, once
 // the hr regime branch is rebased on a GOBL release that has it.
@@ -26,6 +27,19 @@ const (
 	// ExtKeyPaperNumber is the number of an invoice from the bound paper
 	// invoice book, entered after the till broke down (ParagonBrRac).
 	ExtKeyPaperNumber cbc.Key = "hr-fiskal-paper-number"
+
+	// ExtKeyPPPrice says whether the price of a line includes its
+	// consumption tax (PP).
+	ExtKeyPPPrice cbc.Key = "hr-fiskal-pp-price"
+)
+
+// Whether a line's price includes its consumption tax (ExtKeyPPPrice)
+const (
+	// PPPriceIncluded marks a price that includes PP, as a menu price does.
+	// The addon takes PP out of the price and sets PPPriceExcluded.
+	PPPriceIncluded cbc.Code = "included"
+	// PPPriceExcluded marks a price without PP, which is added on top.
+	PPPriceExcluded cbc.Code = "excluded"
 )
 
 // Sequence scopes (OznSlijed)
@@ -103,5 +117,32 @@ var extensions = []*cbc.Definition{
 			`),
 		},
 		Pattern: `^.{1,100}$`,
+	},
+	{
+		Key: ExtKeyPPPrice,
+		Name: i18n.String{
+			i18n.EN: "Croatia Fiskal: Consumption Tax in the Price",
+			i18n.HR: "Hrvatska fiskalizacija: Porez na potrošnju u cijeni",
+		},
+		Desc: i18n.String{
+			i18n.EN: here.Doc(`
+				Whether the price of the line includes its consumption tax (PP),
+				set on the PP tax of the line. A menu price includes both VAT and
+				PP, which share one base, the price without VAT. prices_include
+				names VAT only, so a line whose price also includes PP says so
+				here (included), and the addon takes PP out of the price and sets
+				excluded. With prices_include VAT, each PP line must say which.
+			`),
+		},
+		Values: []*cbc.Definition{
+			{Code: PPPriceIncluded, Name: i18n.String{
+				i18n.EN: "The price includes PP",
+				i18n.HR: "Cijena uključuje porez na potrošnju",
+			}},
+			{Code: PPPriceExcluded, Name: i18n.String{
+				i18n.EN: "The price does not include PP",
+				i18n.HR: "Cijena ne uključuje porez na potrošnju",
+			}},
+		},
 	},
 }

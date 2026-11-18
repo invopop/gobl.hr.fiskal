@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "0368664834a7080cf6d911d6cd3fc4c647889204aa8e2ef0797660d10814f9fd"
+			"val": "edc79928dc8da47e90e8aefb26c403d08dfff283a6aa256e9285dbb6aa1f9aab"
 		}
 	},
 	"doc": {
@@ -21,6 +21,7 @@
 		"issue_time": "20:27:53",
 		"currency": "EUR",
 		"tax": {
+			"prices_include": "VAT",
 			"ext": {
 				"hr-fiskal-device": "1",
 				"hr-fiskal-premises": "POS1",
@@ -55,9 +56,9 @@
 				"quantity": "1",
 				"item": {
 					"name": "Somersby 0,33 l",
-					"price": "3.2812"
+					"price": "4.101563"
 				},
-				"sum": "3.2812",
+				"sum": "4.101563",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -72,20 +73,21 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
+							"hr-fiskal-pp-price": "excluded",
 							"untdid-tax-category": "O"
 						}
 					}
 				],
-				"total": "3.2812"
+				"total": "4.101563"
 			},
 			{
 				"i": 2,
 				"quantity": "1",
 				"item": {
 					"name": "Točeno pivo 0,5 l",
-					"price": "3.5937"
+					"price": "4.492188"
 				},
-				"sum": "3.5937",
+				"sum": "4.492188",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -100,20 +102,21 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
+							"hr-fiskal-pp-price": "excluded",
 							"untdid-tax-category": "O"
 						}
 					}
 				],
-				"total": "3.5937"
+				"total": "4.492188"
 			},
 			{
 				"i": 3,
 				"quantity": "1",
 				"item": {
 					"name": "BBQ burger",
-					"price": "11.4159"
+					"price": "12.90"
 				},
-				"sum": "11.4159",
+				"sum": "12.90",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -125,16 +128,16 @@
 						}
 					}
 				],
-				"total": "11.4159"
+				"total": "12.90"
 			},
 			{
 				"i": 4,
 				"quantity": "1",
 				"item": {
 					"name": "Pašteta",
-					"price": "5.3982"
+					"price": "6.10"
 				},
-				"sum": "5.3982",
+				"sum": "6.10",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -146,16 +149,16 @@
 						}
 					}
 				],
-				"total": "5.3982"
+				"total": "6.10"
 			},
 			{
 				"i": 5,
 				"quantity": "1",
 				"item": {
 					"name": "Kruh s lukom",
-					"price": "3.7168"
+					"price": "4.20"
 				},
-				"sum": "3.7168",
+				"sum": "4.20",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -167,16 +170,16 @@
 						}
 					}
 				],
-				"total": "3.7168"
+				"total": "4.20"
 			},
 			{
 				"i": 6,
 				"quantity": "2",
 				"item": {
 					"name": "Postava stola",
-					"price": "0.4000"
+					"price": "0.50"
 				},
-				"sum": "0.8000",
+				"sum": "1.00",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -188,16 +191,16 @@
 						}
 					}
 				],
-				"total": "0.8000"
+				"total": "1.00"
 			},
 			{
 				"i": 7,
 				"quantity": "1",
 				"item": {
 					"name": "Pizza tuna",
-					"price": "10.6195"
+					"price": "12.00"
 				},
-				"sum": "10.6195",
+				"sum": "12.00",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -209,16 +212,16 @@
 						}
 					}
 				],
-				"total": "10.6195"
+				"total": "12.00"
 			},
 			{
 				"i": 8,
 				"quantity": "0.4",
 				"item": {
 					"name": "Bijelo vino 1 l",
-					"price": "15.6250"
+					"price": "19.531250"
 				},
-				"sum": "6.2500",
+				"sum": "7.812500",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -233,11 +236,12 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
+							"hr-fiskal-pp-price": "excluded",
 							"untdid-tax-category": "O"
 						}
 					}
 				],
-				"total": "6.2500"
+				"total": "7.812500"
 			}
 		],
 		"payment": {
@@ -251,7 +255,8 @@
 			]
 		},
 		"totals": {
-			"sum": "45.08",
+			"sum": "52.61",
+			"tax_included": "7.53",
 			"total": "45.08",
 			"taxes": {
 				"categories": [
@@ -263,7 +268,7 @@
 								"ext": {
 									"untdid-tax-category": "S"
 								},
-								"base": "13.92",
+								"base": "13.93",
 								"percent": "25.0%",
 								"amount": "3.48"
 							},
@@ -284,9 +289,10 @@
 						"rates": [
 							{
 								"ext": {
+									"hr-fiskal-pp-price": "excluded",
 									"untdid-tax-category": "O"
 								},
-								"base": "13.12",
+								"base": "13.13",
 								"percent": "3%",
 								"amount": "0.39"
 							}

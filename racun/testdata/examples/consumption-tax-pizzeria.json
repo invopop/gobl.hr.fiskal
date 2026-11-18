@@ -12,7 +12,7 @@
 		{
 			"item": {
 				"name": "Točeno pivo 0,30 l",
-				"price": "13.2812"
+				"price": "17.00"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -22,6 +22,9 @@
 				},
 				{
 					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp-price": "included"
+					},
 					"percent": "3%"
 				}
 			]
@@ -29,7 +32,7 @@
 		{
 			"item": {
 				"name": "Točeno pivo 0,50 l",
-				"price": "15.6250"
+				"price": "20.00"
 			},
 			"quantity": 2,
 			"taxes": [
@@ -39,6 +42,9 @@
 				},
 				{
 					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp-price": "included"
+					},
 					"percent": "3%"
 				}
 			]
@@ -46,7 +52,7 @@
 		{
 			"item": {
 				"name": "Cedevita",
-				"price": "11.7188"
+				"price": "15.00"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -56,6 +62,9 @@
 				},
 				{
 					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp-price": "included"
+					},
 					"percent": "3%"
 				}
 			]
@@ -63,7 +72,7 @@
 		{
 			"item": {
 				"name": "Mineralna voda 0,25 l",
-				"price": "10.1562"
+				"price": "13.00"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -73,6 +82,9 @@
 				},
 				{
 					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp-price": "included"
+					},
 					"percent": "3%"
 				}
 			]
@@ -80,7 +92,7 @@
 		{
 			"item": {
 				"name": "Pizza miješana, velika",
-				"price": "50.4425"
+				"price": "57.00"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -93,7 +105,7 @@
 		{
 			"item": {
 				"name": "Pizza mare, velika",
-				"price": "53.0973"
+				"price": "60.00"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -106,7 +118,7 @@
 		{
 			"item": {
 				"name": "Pizza kuće, velika",
-				"price": "53.0973"
+				"price": "60.00"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -152,7 +164,8 @@
 		"ext": {
 			"hr-fiskal-device": "1",
 			"hr-fiskal-premises": "POS1"
-		}
+		},
+		"prices_include": "VAT"
 	},
 	"type": "standard",
 	"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a13"

@@ -12,7 +12,7 @@
 		{
 			"item": {
 				"name": "Somersby 0,33 l",
-				"price": "3.2812"
+				"price": "4.20"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -22,6 +22,9 @@
 				},
 				{
 					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp-price": "included"
+					},
 					"percent": "3%"
 				}
 			]
@@ -29,7 +32,7 @@
 		{
 			"item": {
 				"name": "Točeno pivo 0,5 l",
-				"price": "3.5937"
+				"price": "4.60"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -39,6 +42,9 @@
 				},
 				{
 					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp-price": "included"
+					},
 					"percent": "3%"
 				}
 			]
@@ -46,7 +52,7 @@
 		{
 			"item": {
 				"name": "BBQ burger",
-				"price": "11.4159"
+				"price": "12.90"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -59,7 +65,7 @@
 		{
 			"item": {
 				"name": "Pašteta",
-				"price": "5.3982"
+				"price": "6.10"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -72,7 +78,7 @@
 		{
 			"item": {
 				"name": "Kruh s lukom",
-				"price": "3.7168"
+				"price": "4.20"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -85,7 +91,7 @@
 		{
 			"item": {
 				"name": "Postava stola",
-				"price": "0.4000"
+				"price": "0.50"
 			},
 			"quantity": 2,
 			"taxes": [
@@ -98,7 +104,7 @@
 		{
 			"item": {
 				"name": "Pizza tuna",
-				"price": "10.6195"
+				"price": "12.00"
 			},
 			"quantity": 1,
 			"taxes": [
@@ -111,7 +117,7 @@
 		{
 			"item": {
 				"name": "Bijelo vino 1 l",
-				"price": "15.6250"
+				"price": "20.00"
 			},
 			"quantity": 0.4,
 			"taxes": [
@@ -121,6 +127,9 @@
 				},
 				{
 					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp-price": "included"
+					},
 					"percent": "3%"
 				}
 			]
@@ -161,7 +170,8 @@
 		"ext": {
 			"hr-fiskal-device": "1",
 			"hr-fiskal-premises": "POS1"
-		}
+		},
+		"prices_include": "VAT"
 	},
 	"type": "standard",
 	"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a12"

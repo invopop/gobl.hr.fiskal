@@ -93,10 +93,15 @@ func newAddon() *tax.AddonDef {
 				A drink served by a catering business also pays the consumption
 				tax (porez na potrošnju): its line has the tax PP next to VAT, with
 				the municipality's rate, from 0 to 3 %. Both taxes have the same
-				base, the price without VAT, so a menu price includes both. GOBL
-				can take only one tax out of a price (prices_include), so the
-				price on a PP line must leave out both taxes: the menu price
-				divided by 1.28 for 25 % VAT and 3 % PP.
+				base, the price without VAT, so a menu price includes both.
+				prices_include names VAT only, so with prices_include VAT each PP
+				says whether the line's price includes it, in hr-fiskal-pp-price:
+				included for a menu price, or excluded to add PP on top. The
+				addon takes PP out of an included price, which then holds only
+				VAT (30.00 × 1.25 / 1.28 for 25 % VAT and 3 % PP), and sets
+				excluded. GOBL then works out both taxes, and the total is the
+				menu price. With prices without VAT, PP is added on top and the
+				extension is not needed.
 
 				A fee that is not a tax, such as the deposit on a bottle or can
 				(povratna naknada), is a charge without taxes. CIS receives it by

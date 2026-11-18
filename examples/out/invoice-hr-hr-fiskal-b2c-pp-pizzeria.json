@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "5d758f17c19ed45ebd1c5364446ce63c7f5475be2e46cdceae06294bc6ea76eb"
+			"val": "e7dfb5c2da44bd20447bf2bcb42cfadf38182da2ae19a073c3cf278a8fb0f530"
 		}
 	},
 	"doc": {
@@ -21,6 +21,7 @@
 		"issue_time": "21:36:04",
 		"currency": "EUR",
 		"tax": {
+			"prices_include": "VAT",
 			"ext": {
 				"hr-fiskal-device": "1",
 				"hr-fiskal-premises": "POS1",
@@ -55,9 +56,9 @@
 				"quantity": "1",
 				"item": {
 					"name": "Točeno pivo 0,30 l",
-					"price": "13.2812"
+					"price": "16.601563"
 				},
-				"sum": "13.2812",
+				"sum": "16.601563",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -72,20 +73,21 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
+							"hr-fiskal-pp-price": "excluded",
 							"untdid-tax-category": "O"
 						}
 					}
 				],
-				"total": "13.2812"
+				"total": "16.601563"
 			},
 			{
 				"i": 2,
 				"quantity": "2",
 				"item": {
 					"name": "Točeno pivo 0,50 l",
-					"price": "15.6250"
+					"price": "19.531250"
 				},
-				"sum": "31.2500",
+				"sum": "39.062500",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -100,20 +102,21 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
+							"hr-fiskal-pp-price": "excluded",
 							"untdid-tax-category": "O"
 						}
 					}
 				],
-				"total": "31.2500"
+				"total": "39.062500"
 			},
 			{
 				"i": 3,
 				"quantity": "1",
 				"item": {
 					"name": "Cedevita",
-					"price": "11.7188"
+					"price": "14.648438"
 				},
-				"sum": "11.7188",
+				"sum": "14.648438",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -128,20 +131,21 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
+							"hr-fiskal-pp-price": "excluded",
 							"untdid-tax-category": "O"
 						}
 					}
 				],
-				"total": "11.7188"
+				"total": "14.648438"
 			},
 			{
 				"i": 4,
 				"quantity": "1",
 				"item": {
 					"name": "Mineralna voda 0,25 l",
-					"price": "10.1562"
+					"price": "12.695313"
 				},
-				"sum": "10.1562",
+				"sum": "12.695313",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -156,20 +160,21 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
+							"hr-fiskal-pp-price": "excluded",
 							"untdid-tax-category": "O"
 						}
 					}
 				],
-				"total": "10.1562"
+				"total": "12.695313"
 			},
 			{
 				"i": 5,
 				"quantity": "1",
 				"item": {
 					"name": "Pizza miješana, velika",
-					"price": "50.4425"
+					"price": "57.00"
 				},
-				"sum": "50.4425",
+				"sum": "57.00",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -181,16 +186,16 @@
 						}
 					}
 				],
-				"total": "50.4425"
+				"total": "57.00"
 			},
 			{
 				"i": 6,
 				"quantity": "1",
 				"item": {
 					"name": "Pizza mare, velika",
-					"price": "53.0973"
+					"price": "60.00"
 				},
-				"sum": "53.0973",
+				"sum": "60.00",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -202,16 +207,16 @@
 						}
 					}
 				],
-				"total": "53.0973"
+				"total": "60.00"
 			},
 			{
 				"i": 7,
 				"quantity": "1",
 				"item": {
 					"name": "Pizza kuće, velika",
-					"price": "53.0973"
+					"price": "60.00"
 				},
-				"sum": "53.0973",
+				"sum": "60.00",
 				"taxes": [
 					{
 						"cat": "VAT",
@@ -223,7 +228,7 @@
 						}
 					}
 				],
-				"total": "53.0973"
+				"total": "60.00"
 			}
 		],
 		"payment": {
@@ -237,7 +242,8 @@
 			]
 		},
 		"totals": {
-			"sum": "223.04",
+			"sum": "260.01",
+			"tax_included": "36.96",
 			"total": "223.04",
 			"taxes": {
 				"categories": [
@@ -270,6 +276,7 @@
 						"rates": [
 							{
 								"ext": {
+									"hr-fiskal-pp-price": "excluded",
 									"untdid-tax-category": "O"
 								},
 								"base": "66.41",
