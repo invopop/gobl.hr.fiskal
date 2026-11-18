@@ -1,0 +1,159 @@
+{
+	"$addons": [
+		"hr-fiskal-b2c-v1"
+	],
+	"$regime": "HR",
+	"$schema": "https://gobl.org/draft-0/bill/invoice",
+	"code": "5450",
+	"currency": "EUR",
+	"issue_date": "2026-11-06",
+	"issue_time": "21:36:04",
+	"lines": [
+		{
+			"item": {
+				"name": "Točeno pivo 0,30 l",
+				"price": "13.2812"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				},
+				{
+					"cat": "PP",
+					"percent": "3%"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Točeno pivo 0,50 l",
+				"price": "15.6250"
+			},
+			"quantity": 2,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				},
+				{
+					"cat": "PP",
+					"percent": "3%"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Cedevita",
+				"price": "11.7188"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				},
+				{
+					"cat": "PP",
+					"percent": "3%"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Mineralna voda 0,25 l",
+				"price": "10.1562"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				},
+				{
+					"cat": "PP",
+					"percent": "3%"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Pizza miješana, velika",
+				"price": "50.4425"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "reduced"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Pizza mare, velika",
+				"price": "53.0973"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "reduced"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Pizza kuće, velika",
+				"price": "53.0973"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "reduced"
+				}
+			]
+		}
+	],
+	"payment": {
+		"advances": [
+			{
+				"description": "Gotovina",
+				"key": "cash",
+				"percent": "100%"
+			}
+		]
+	},
+	"supplier": {
+		"name": "Invopop d.o.o.",
+		"people": [
+			{
+				"identities": [
+					{
+						"code": "80432461483",
+						"type": "OIB"
+					}
+				],
+				"key": "operator",
+				"name": {
+					"given": "Ivan",
+					"surname": "Horvat"
+				}
+			}
+		],
+		"tax_id": {
+			"code": "80432461483",
+			"country": "HR"
+		}
+	},
+	"tax": {
+		"ext": {
+			"hr-fiskal-device": "1",
+			"hr-fiskal-premises": "POS1"
+		}
+	},
+	"type": "standard",
+	"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a13"
+}
