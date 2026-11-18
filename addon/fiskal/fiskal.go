@@ -90,6 +90,14 @@ func newAddon() *tax.AddonDef {
 				scope of VAT uses the key outside-scope, with no note. CIS receives
 				only the total of its invoices, with no VAT breakdown.
 
+				A drink served by a catering business also pays the consumption
+				tax (porez na potrošnju): its line has the tax PP next to VAT, with
+				the municipality's rate, from 0 to 3 %. Both taxes have the same
+				base, the price without VAT, so a menu price includes both. GOBL
+				can take only one tax out of a price (prices_include), so the
+				price on a PP line must leave out both taxes: the menu price
+				divided by 1.28 for 25 % VAT and 3 % PP.
+
 				An invoice from the bound paper invoice book, entered after the till
 				broke down, carries its paper number in hr-fiskal-paper-number.
 
@@ -109,13 +117,13 @@ func newAddon() *tax.AddonDef {
 				numbered, so that no number is lost (the sequence must have no
 				gaps, Art. 9(2) of the Fiscalization Act). Credit notes and other
 				corrections, negative totals, charges without VAT, taxes other
-				than VAT, and reverse charge are not supported yet. A rounding
+				than VAT and PP, and reverse charge are not supported yet. A rounding
 				amount, a discount without VAT and a line without VAT are never
 				accepted: the invoice request has no element for them, and CIS
 				checks that the total is the sum of the tax breakdowns. A line
 				with no VAT to charge uses the VAT key exempt or outside-scope.
-				A VAT rate other than 0, 5, 13 or 25 % is refused too, as CIS
-				refuses it.
+				A VAT rate other than 0, 5, 13 or 25 %, and a PP rate above
+				3 %, are refused too, as CIS refuses them.
 
 				A sale fiscalized as a receipt cannot also be issued and
 				fiscalized as an eRačun (Art. 39(2) of the Fiscalization Act), so

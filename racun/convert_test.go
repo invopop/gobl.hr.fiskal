@@ -331,6 +331,48 @@ func TestExemptAndOutsideScope(t *testing.T) {
 	assert.Equal(t, "10.65", r.Total)
 }
 
+// drinkWithPP makes the invoice two drinks with VAT and a 3 % consumption
+// tax, as a bar receipt: 2 × 4.00 on the menu, which includes both taxes,
+// so a net price of 4.00 / 1.28.
+func drinkWithPP(inv *bill.Invoice, vat *tax.Combo) {
+	inv.Tax.PricesInclude = ""
+	inv.Lines = []*bill.Line{{
+		Quantity: num.MakeAmount(2, 0),
+		Item:     &org.Item{Name: "Pelinkovac 0,03 l", Price: num.NewAmount(3125, 3)},
+		Taxes:    tax.Set{vat, {Category: hr.TaxCategoryPP, Percent: num.NewPercentage(3, 2)}},
+	}}
+}
+
+// The consumption tax has the same base as VAT, and the total holds both
+// taxes, as on a real receipt of a Trogir bar (Feb 2025).
+func TestConsumptionTax(t *testing.T) {
+	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
+	drinkWithPP(inv, &tax.Combo{Category: tax.CategoryVAT, Rate: tax.RateGeneral})
+	require.NoError(t, inv.Calculate())
+	require.NoError(t, rules.Validate(inv))
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	assert.Equal(t, []*Tax{{Rate: "25.00", Base: "6.25", Amount: "1.56"}}, r.VAT)
+	assert.Equal(t, []*Tax{{Rate: "3.00", Base: "6.25", Amount: "0.19"}}, r.ConsumptionTax)
+	assert.Equal(t, "8.00", r.Total)
+}
+
+// An issuer outside the VAT system pays the consumption tax too, so CIS
+// gets it without the VAT breakdown.
+func TestSmallTaxpayerConsumptionTax(t *testing.T) {
+	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
+	outsideVAT(inv)
+	drinkWithPP(inv, &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyExempt})
+	require.NoError(t, inv.Calculate())
+	require.NoError(t, rules.Validate(inv))
+	r, err := FromInvoice(inv, testOptions(), testKey(t))
+	require.NoError(t, err)
+	assert.Empty(t, r.VAT)
+	assert.Empty(t, r.VATExemptAmount)
+	assert.Equal(t, []*Tax{{Rate: "3.00", Base: "6.25", Amount: "0.19"}}, r.ConsumptionTax)
+	assert.Equal(t, "6.44", r.Total)
+}
+
 // TestAnotherCurrency checks that an invoice in another currency is sent to
 // CIS in euros, converted with its exchange rate, and that the caller's
 // invoice keeps its currency.

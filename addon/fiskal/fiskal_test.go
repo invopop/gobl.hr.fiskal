@@ -350,6 +350,44 @@ func TestVATPercent(t *testing.T) {
 	})
 }
 
+func TestConsumptionTax(t *testing.T) {
+	ppLine := func(p *num.Percentage) *bill.Invoice {
+		inv := testInvoice()
+		inv.Lines[0].Taxes = tax.Set{
+			{Category: tax.CategoryVAT, Rate: tax.RateGeneral},
+			{Category: hr.TaxCategoryPP, Percent: p},
+		}
+		return inv
+	}
+	for _, p := range []num.Percentage{
+		num.MakePercentage(0, 2),
+		num.MakePercentage(15, 3), // 1.5 %, as in Rijeka
+		num.MakePercentage(3, 2),
+	} {
+		t.Run("accepts "+p.String(), func(t *testing.T) {
+			inv := ppLine(&p)
+			require.NoError(t, inv.Calculate())
+			require.NoError(t, rules.Validate(inv))
+		})
+	}
+	ppFault := rules.GOBL.Add(fiskal.Namespace).Add("TAX-COMBO").Add("04")
+	for _, p := range []num.Percentage{num.MakePercentage(-1, 2), num.MakePercentage(35, 3)} {
+		t.Run("refuses "+p.String(), func(t *testing.T) {
+			assertFault(t, ppLine(&p), ppFault)
+		})
+	}
+	t.Run("refuses a line without a percent", func(t *testing.T) {
+		assertFault(t, ppLine(nil), ppFault)
+	})
+	t.Run("does not check the PP percent against the VAT rates", func(t *testing.T) {
+		p := num.MakePercentage(3, 2)
+		inv := ppLine(&p)
+		require.NoError(t, inv.Calculate())
+		faults := rules.Validate(inv)
+		assert.False(t, faults != nil && faults.HasCode(rules.GOBL.Add(fiskal.Namespace).Add("TAX-COMBO").Add("03")), "got %s", faults)
+	})
+}
+
 // eracunStandIn registers an addon with the eRačun key, as this module does
 // not import gobl.hr.eracun. GOBL refuses an invoice with an addon it does
 // not know.

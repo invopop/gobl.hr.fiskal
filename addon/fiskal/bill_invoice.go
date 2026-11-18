@@ -262,24 +262,46 @@ var allowedVATPercents = []num.Percentage{
 	num.MakePercentage(25, 2),
 }
 
+// maxPPPercent is the highest consumption tax rate: a municipality sets its
+// rate up to 3 % (Local Taxes Act, Art. 24), and CIS refuses a higher one
+// (error 184, spec v2.7, p. 22).
+var maxPPPercent = num.MakePercentage(3, 2)
+
 // taxComboRules refuse the taxes that the racun conversion does not support
 // yet, for the same reason as rules 18 to 23 of the invoice: taxes other
-// than VAT (EU3-34), and reverse charge, whose report to CIS is still to
-// confirm. Rule 03 refuses a VAT rate that CIS refuses (error 182), as the
-// invoice would be numbered and then never fiscalized.
+// than VAT and the consumption tax (PP), and reverse charge, whose report to
+// CIS is still to confirm. Rules 03 and 04 refuse a rate that CIS refuses
+// (errors 182 to 184), as the invoice would be numbered and then never
+// fiscalized.
+//
+// PP goes on each line of a drink, next to its VAT: both taxes have the same
+// base, the price without VAT (Local Taxes Act, Art. 23(2)). The regime
+// gives PP no rates, as each municipality sets its own, so the line gives
+// the percent.
 func taxComboRules() *rules.Set {
 	return rules.For(new(tax.Combo),
 		rules.Field("cat",
-			rules.Assert("01", "tax category must be VAT: other taxes are not supported yet", is.In(tax.CategoryVAT)),
+			rules.Assert("01", "tax category must be VAT or PP: other taxes are not supported yet",
+				is.In(tax.CategoryVAT, hr.TaxCategoryPP),
+			),
 		),
 		rules.Field("key",
 			rules.Assert("02", "VAT key must not be reverse-charge or intra-community: not supported yet",
 				is.Func("not reverse charge", keyNotReverseCharge),
 			),
 		),
-		rules.Field("percent",
-			rules.AssertIfPresent("03", "VAT percent must be 0, 5, 13 or 25 %: CIS refuses other rates (error 182)",
-				is.Func("allowed VAT percent", percentAllowed),
+		rules.When(is.Func("category is VAT", taxComboIsVAT),
+			rules.Field("percent",
+				rules.AssertIfPresent("03", "VAT percent must be 0, 5, 13 or 25 %: CIS refuses other rates (error 182)",
+					is.Func("allowed VAT percent", percentAllowed),
+				),
+			),
+		),
+		rules.When(is.Func("category is PP", taxComboIsPP),
+			rules.Field("percent",
+				rules.Assert("04", "consumption tax (PP) needs a percent from 0 to 3 %: CIS refuses other rates (errors 183 and 184)",
+					is.Func("allowed PP percent", ppPercentAllowed),
+				),
 			),
 		),
 	)
@@ -308,6 +330,21 @@ func percentAllowed(val any) bool {
 		}
 	}
 	return false
+}
+
+func ppPercentAllowed(val any) bool {
+	p, ok := val.(*num.Percentage)
+	return ok && p != nil && !p.IsNegative() && p.Compare(maxPPPercent) <= 0
+}
+
+func taxComboIsVAT(val any) bool {
+	tc, ok := val.(*tax.Combo)
+	return ok && tc != nil && tc.Category == tax.CategoryVAT
+}
+
+func taxComboIsPP(val any) bool {
+	tc, ok := val.(*tax.Combo)
+	return ok && tc != nil && tc.Category == hr.TaxCategoryPP
 }
 
 func keyNotReverseCharge(val any) bool {

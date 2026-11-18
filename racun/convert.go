@@ -102,6 +102,7 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 	}
 	r.InVATSystem = fiskal.PartyHasVATNumber(inv.Supplier)
 	addTaxes(r, inv)
+	addConsumptionTax(r, inv)
 	if !r.InVATSystem {
 		dropVATBreakdown(r)
 	}
@@ -192,9 +193,26 @@ func number(inv *bill.Invoice) *Number {
 	}
 }
 
+// addConsumptionTax adds the consumption tax (Pnp): one entry per rate. The
+// addon rules give every PP line a percent. An issuer outside the VAT
+// system pays it too, so dropVATBreakdown keeps it.
+func addConsumptionTax(r *Invoice, inv *bill.Invoice) {
+	pp := inv.Totals.Taxes.Category(hr.TaxCategoryPP)
+	if pp == nil {
+		return
+	}
+	for _, rate := range pp.Rates {
+		r.ConsumptionTax = append(r.ConsumptionTax, &Tax{
+			Rate:   percent(*rate.Percent),
+			Base:   amount(rate.Base),
+			Amount: amount(rate.Amount),
+		})
+	}
+}
+
 // addTaxes adds the VAT breakdown: one entry per rate with a percentage, and
-// the exempt and outside-scope bases as totals. The addon rules allow only
-// VAT, and no reverse charge, so every other rate has a percentage.
+// the exempt and outside-scope bases as totals. The addon rules allow no
+// reverse charge, so every other rate has a percentage.
 func addTaxes(r *Invoice, inv *bill.Invoice) {
 	vat := inv.Totals.Taxes.Category(tax.CategoryVAT)
 	if vat == nil {
