@@ -1,0 +1,62 @@
+# A shop receipt with drinks and the deposit on their packaging (povratna
+# naknada, 0.10 EUR per bottle or can since 2025). The deposit is not a tax
+# and has no VAT: it is a charge without taxes, which CIS receives as a fee
+# (Naknada), by its name and amount.
+$schema: "https://gobl.org/draft-0/bill/invoice"
+$regime: "HR"
+$addons: ["hr-fiskal-b2c-v1"]
+uuid: "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a14"
+type: standard
+code: "2210"
+issue_date: "2026-11-06"
+issue_time: "18:42:10"
+currency: "EUR"
+tax:
+  prices_include: VAT
+  ext:
+    hr-fiskal-premises: "POS1"
+    hr-fiskal-device: "1"
+
+supplier:
+  name: "Invopop d.o.o."
+  tax_id:
+    country: "HR"
+    code: "80432461483"
+  people:
+    - key: operator
+      name:
+        given: "Ivan"
+        surname: "Horvat"
+      identities:
+        - type: OIB
+          code: "80432461483"
+
+lines:
+  # Beer, 0.5 l can
+  - quantity: 6
+    item:
+      name: "Pivo 0,5 l limenka"
+      price: "1.29"
+    taxes:
+      - cat: VAT
+        rate: general
+
+  # Mineral water, 1.5 l bottle
+  - quantity: 2
+    item:
+      name: "Mineralna voda 1,5 l"
+      price: "0.89"
+    taxes:
+      - cat: VAT
+        rate: general
+
+charges:
+  # Deposit: 8 containers at 0.10
+  - reason: "Povratna naknada"
+    amount: "0.80"
+
+payment:
+  advances:
+    - key: card
+      description: "Kartica"
+      percent: "100%"
