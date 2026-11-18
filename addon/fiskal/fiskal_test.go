@@ -1,6 +1,7 @@
 package fiskal_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/invopop/gobl.hr.fiskal/addon/fiskal"
@@ -203,9 +204,15 @@ func TestInvoiceRules(t *testing.T) {
 		{"operator without an OIB", func(inv *bill.Invoice) { inv.Supplier.People[0].Identities = nil }, "15"},
 		{"a credit note", func(inv *bill.Invoice) { inv.Type = bill.InvoiceTypeCreditNote }, "18"},
 		{"a negative total", func(inv *bill.Invoice) { inv.Lines[0].Item.Price = num.NewAmount(-250, 2) }, "19"},
-		{"a charge without taxes", func(inv *bill.Invoice) {
-			inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(10, 2), Reason: "Povratna naknada"}}
-		}, "21"},
+		{"a fee without a reason", func(inv *bill.Invoice) {
+			inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(10, 2)}}
+		}, "26"},
+		{"a fee with a reason longer than 100 characters", func(inv *bill.Invoice) {
+			inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(10, 2), Reason: strings.Repeat("ž", 101)}}
+		}, "26"},
+		{"a tax as a charge without taxes", func(inv *bill.Invoice) {
+			inv.Charges = []*bill.Charge{{Key: bill.ChargeKeyTax, Amount: num.MakeAmount(2000, 0), Reason: "PPMV"}}
+		}, "27"},
 		{"a discount without taxes", func(inv *bill.Invoice) {
 			inv.Discounts = []*bill.Discount{{Amount: num.MakeAmount(10, 2), Reason: "Promo"}}
 		}, "22"},
@@ -385,6 +392,29 @@ func TestConsumptionTax(t *testing.T) {
 		require.NoError(t, inv.Calculate())
 		faults := rules.Validate(inv)
 		assert.False(t, faults != nil && faults.HasCode(rules.GOBL.Add(fiskal.Namespace).Add("TAX-COMBO").Add("03")), "got %s", faults)
+	})
+}
+
+// A charge without taxes is a fee, such as a bottle deposit ("povratna
+// naknada"), reported by its reason and amount.
+func TestFees(t *testing.T) {
+	t.Run("accepts a fee with a reason", func(t *testing.T) {
+		inv := testInvoice()
+		inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(60, 2), Reason: "Povratna naknada"}}
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
+	})
+	t.Run("accepts a reason of 100 characters", func(t *testing.T) {
+		inv := testInvoice()
+		inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(60, 2), Reason: strings.Repeat("ž", 100)}}
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
+	})
+	t.Run("an informative charge is not a fee", func(t *testing.T) {
+		inv := testInvoice()
+		inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(60, 2), Informative: true}}
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
 	})
 }
 

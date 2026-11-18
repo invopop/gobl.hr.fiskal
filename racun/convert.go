@@ -103,6 +103,7 @@ func FromInvoice(inv *bill.Invoice, opts *Options, key crypto.Signer) (*Invoice,
 	r.InVATSystem = fiskal.PartyHasVATNumber(inv.Supplier)
 	addTaxes(r, inv)
 	addConsumptionTax(r, inv)
+	addFees(r, inv)
 	if !r.InVATSystem {
 		dropVATBreakdown(r)
 	}
@@ -207,6 +208,18 @@ func addConsumptionTax(r *Invoice, inv *bill.Invoice) {
 			Base:   amount(rate.Base),
 			Amount: amount(rate.Amount),
 		})
+	}
+}
+
+// addFees adds the fees (Naknade), such as a bottle deposit: the charges
+// without taxes, each by its reason and amount. The addon rules give each
+// one a reason. An issuer outside the VAT system charges them too, so
+// dropVATBreakdown keeps them.
+func addFees(r *Invoice, inv *bill.Invoice) {
+	for _, c := range inv.Charges {
+		if fiskal.IsFee(c) {
+			r.Fees = append(r.Fees, &Fee{Name: c.Reason, Amount: amount(c.Amount)})
+		}
 	}
 }
 

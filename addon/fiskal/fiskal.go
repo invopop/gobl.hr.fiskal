@@ -98,6 +98,10 @@ func newAddon() *tax.AddonDef {
 				price on a PP line must leave out both taxes: the menu price
 				divided by 1.28 for 25 % VAT and 3 % PP.
 
+				A fee that is not a tax, such as the deposit on a bottle or can
+				(povratna naknada), is a charge without taxes. CIS receives it by
+				its name, the charge's reason, and its amount.
+
 				An invoice from the bound paper invoice book, entered after the till
 				broke down, carries its paper number in hr-fiskal-paper-number.
 
@@ -116,14 +120,15 @@ func newAddon() *tax.AddonDef {
 				Some invoices can't be fiscalized, and are refused before they are
 				numbered, so that no number is lost (the sequence must have no
 				gaps, Art. 9(2) of the Fiscalization Act). Credit notes and other
-				corrections, negative totals, charges without VAT, taxes other
-				than VAT and PP, and reverse charge are not supported yet. A rounding
-				amount, a discount without VAT and a line without VAT are never
-				accepted: the invoice request has no element for them, and CIS
-				checks that the total is the sum of the tax breakdowns. A line
-				with no VAT to charge uses the VAT key exempt or outside-scope.
-				A VAT rate other than 0, 5, 13 or 25 %, and a PP rate above
-				3 %, are refused too, as CIS refuses them.
+				corrections, negative totals, taxes other than VAT and PP (such
+				as a charge with the key tax), and reverse charge are not
+				supported yet. A rounding amount, a discount without VAT and a
+				line without VAT are never accepted: the invoice request has no
+				element for them, and CIS checks that the total is the sum of
+				the tax breakdowns and fees. A line with no VAT to charge uses
+				the VAT key exempt or outside-scope. A VAT rate other than 0, 5,
+				13 or 25 %, and a PP rate outside 0 to 3 %, are refused too, as
+				CIS refuses them.
 
 				A sale fiscalized as a receipt cannot also be issued and
 				fiscalized as an eRačun (Art. 39(2) of the Fiscalization Act), so

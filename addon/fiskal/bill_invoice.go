@@ -202,9 +202,9 @@ func billInvoiceRules() *rules.Set {
 		// leaves a gap in the sequence, which Art. 9(2) of the
 		// Fiscalization Act forbids.
 		//
-		// Rules 18, 19 and 21 are cases racun does not support yet:
-		// corrections (EU3-29) and fees (EU3-34). Drop a rule when racun
-		// supports its case.
+		// Rules 18 and 19 are cases racun does not support yet: corrections
+		// (EU3-29). Drop a rule when racun supports its case. Rule 21, a
+		// charge without taxes, went when racun began to report fees.
 		//
 		// Rules 20, 22 and 23 stay: the invoice request has no element for a
 		// rounding amount, a discount without taxes or a line without taxes.
@@ -224,10 +224,25 @@ func billInvoiceRules() *rules.Set {
 				is.Func("no rounding", totalsHaveNoRounding),
 			),
 		),
+		// A charge without taxes is a fee, such as a bottle deposit, which
+		// racun reports by its name and amount (Naknada). The name is the
+		// charge's reason, up to the 100 characters NazivN takes. A charge
+		// with the key tax, such as the motor vehicle tax (PPMV), is a tax,
+		// not a fee: it belongs in OstaliPor, which racun does not support
+		// yet (EU3-34).
 		rules.Field("charges",
 			rules.Each(
-				rules.Field("taxes",
-					rules.Assert("21", "invoice charge requires VAT: fees without taxes (Naknade) are not supported yet", is.Present),
+				rules.When(is.Func("fee", chargeIsFee),
+					rules.Field("reason",
+						rules.Assert("26", "invoice charge without taxes is a fee and needs a reason of up to 100 characters: CIS takes it as the fee's name (NazivN)",
+							is.Present, is.RuneLength(1, 100),
+						),
+					),
+					rules.Field("key",
+						rules.Assert("27", "invoice charge without taxes must not have the key tax: other taxes (OstaliPor) are not supported yet",
+							is.Func("not a tax", keyNotTax),
+						),
+					),
 				),
 			),
 		),
@@ -330,6 +345,23 @@ func percentAllowed(val any) bool {
 		}
 	}
 	return false
+}
+
+// IsFee reports whether a charge is a fee (Naknada): a charge without taxes
+// that adds to the total. An informative charge adds nothing, so it is not
+// one.
+func IsFee(c *bill.Charge) bool {
+	return c != nil && !c.Informative && len(c.Taxes) == 0
+}
+
+func keyNotTax(val any) bool {
+	k, ok := val.(cbc.Key)
+	return !ok || k != bill.ChargeKeyTax
+}
+
+func chargeIsFee(val any) bool {
+	c, ok := val.(*bill.Charge)
+	return ok && IsFee(c)
 }
 
 func ppPercentAllowed(val any) bool {

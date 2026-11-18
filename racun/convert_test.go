@@ -373,6 +373,46 @@ func TestSmallTaxpayerConsumptionTax(t *testing.T) {
 	assert.Equal(t, "6.44", r.Total)
 }
 
+// A charge without taxes, such as a bottle deposit, is a fee (Naknada): it
+// adds to the total, and to no tax breakdown.
+func TestFees(t *testing.T) {
+	deposit := &bill.Charge{Amount: num.MakeAmount(20, 2), Reason: "Povratna naknada"}
+	t.Run("in the VAT system", func(t *testing.T) {
+		inv := withCharges(t, []*bill.Charge{deposit}, nil)
+		r, err := FromInvoice(inv, testOptions(), testKey(t))
+		require.NoError(t, err)
+		assert.Equal(t, []*Fee{{Name: "Povratna naknada", Amount: "0.20"}}, r.Fees)
+		assert.Equal(t, []*Tax{
+			{Rate: "25.00", Base: "4.00", Amount: "1.00"},
+			{Rate: "13.00", Base: fiveEuros, Amount: "0.65"},
+		}, r.VAT)
+		assert.Equal(t, "10.85", r.Total)
+	})
+	t.Run("outside the VAT system", func(t *testing.T) {
+		inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
+		outsideVAT(inv)
+		inv.Tax.PricesInclude = ""
+		for _, l := range inv.Lines {
+			l.Taxes = tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt}}
+		}
+		inv.Charges = []*bill.Charge{deposit}
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
+		r, err := FromInvoice(inv, testOptions(), testKey(t))
+		require.NoError(t, err)
+		assert.Empty(t, r.VAT)
+		assert.Equal(t, []*Fee{{Name: "Povratna naknada", Amount: "0.20"}}, r.Fees)
+		assert.Equal(t, "10.85", r.Total)
+	})
+	t.Run("an informative charge is not sent", func(t *testing.T) {
+		inv := withCharges(t, []*bill.Charge{{Amount: num.MakeAmount(20, 2), Reason: "Info", Informative: true}}, nil)
+		r, err := FromInvoice(inv, testOptions(), testKey(t))
+		require.NoError(t, err)
+		assert.Empty(t, r.Fees)
+		assert.Equal(t, "10.65", r.Total)
+	})
+}
+
 // TestAnotherCurrency checks that an invoice in another currency is sent to
 // CIS in euros, converted with its exchange rate, and that the caller's
 // invoice keeps its currency.
