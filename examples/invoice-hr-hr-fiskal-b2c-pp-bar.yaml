@@ -1,0 +1,52 @@
+# A bar receipt with one drink and the consumption tax, after a real
+# receipt of 2025: 2 x 4.00, of which VAT 1.56 and PP 0.19 on a base of 6.25.
+# Drinks pay VAT and the consumption tax (PP); food pays VAT only. The menu
+# price of a drink includes both taxes, which share one base, the price
+# without VAT. GOBL can take only one tax out of a price, so each price here
+# leaves out both: the menu price / 1.28 (25 % VAT + 3 % PP), or / 1.13 for
+# food at 13 % VAT.
+$schema: "https://gobl.org/draft-0/bill/invoice"
+$regime: "HR"
+$addons: ["hr-fiskal-b2c-v1"]
+uuid: "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a11"
+type: standard
+code: "1455"
+issue_date: "2026-11-06"
+issue_time: "16:07:00"
+currency: "EUR"
+tax:
+  ext:
+    hr-fiskal-premises: "POS1"
+    hr-fiskal-device: "1"
+
+supplier:
+  name: "Invopop d.o.o."
+  tax_id:
+    country: "HR"
+    code: "80432461483"
+  people:
+    - key: operator
+      name:
+        given: "Ivan"
+        surname: "Horvat"
+      identities:
+        - type: OIB
+          code: "80432461483"
+
+lines:
+  # Pelinkovac, a herbal liqueur: 4.00 on the menu
+  - quantity: 2
+    item:
+      name: "Pelinkovac 0,03 l"
+      price: "3.1250"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+payment:
+  advances:
+    - key: cash
+      description: "Gotovina"
+      percent: "100%"

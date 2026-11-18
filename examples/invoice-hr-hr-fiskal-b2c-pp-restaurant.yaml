@@ -1,0 +1,120 @@
+# A restaurant receipt with drinks, food and a cover charge, after a real
+# receipt of 2025. On that receipt, the till also charged PP on the cover
+# charge; the law taxes only drinks, so here it pays VAT only.
+# Drinks pay VAT and the consumption tax (PP); food pays VAT only. The menu
+# price of a drink includes both taxes, which share one base, the price
+# without VAT. GOBL can take only one tax out of a price, so each price here
+# leaves out both: the menu price / 1.28 (25 % VAT + 3 % PP), or / 1.13 for
+# food at 13 % VAT.
+$schema: "https://gobl.org/draft-0/bill/invoice"
+$regime: "HR"
+$addons: ["hr-fiskal-b2c-v1"]
+uuid: "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a12"
+type: standard
+code: "1878"
+issue_date: "2026-11-06"
+issue_time: "20:27:53"
+currency: "EUR"
+tax:
+  ext:
+    hr-fiskal-premises: "POS1"
+    hr-fiskal-device: "1"
+
+supplier:
+  name: "Invopop d.o.o."
+  tax_id:
+    country: "HR"
+    code: "80432461483"
+  people:
+    - key: operator
+      name:
+        given: "Ivan"
+        surname: "Horvat"
+      identities:
+        - type: OIB
+          code: "80432461483"
+
+lines:
+  # Cider: 4.20 on the menu
+  - quantity: 1
+    item:
+      name: "Somersby 0,33 l"
+      price: "3.2812"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+  # Draught beer: 4.60 on the menu
+  - quantity: 1
+    item:
+      name: "Točeno pivo 0,5 l"
+      price: "3.5937"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+  # 12.90 on the menu
+  - quantity: 1
+    item:
+      name: "BBQ burger"
+      price: "11.4159"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # Pâté: 6.10 on the menu
+  - quantity: 1
+    item:
+      name: "Pašteta"
+      price: "5.3982"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # Garlic bread: 4.20 on the menu
+  - quantity: 1
+    item:
+      name: "Kruh s lukom"
+      price: "3.7168"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # Cover charge, per person: 0.50 on the menu
+  - quantity: 2
+    item:
+      name: "Postava stola"
+      price: "0.4000"
+    taxes:
+      - cat: VAT
+        rate: general
+
+  # Tuna pizza: 12.00 on the menu
+  - quantity: 1
+    item:
+      name: "Pizza tuna"
+      price: "10.6195"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # White wine, by the litre: 20.00 on the menu
+  - quantity: 0.4
+    item:
+      name: "Bijelo vino 1 l"
+      price: "15.6250"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+payment:
+  advances:
+    - key: cash
+      description: "Gotovina"
+      percent: "100%"

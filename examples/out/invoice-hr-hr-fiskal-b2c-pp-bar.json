@@ -1,0 +1,136 @@
+{
+	"$schema": "https://gobl.org/draft-0/envelope",
+	"head": {
+		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
+		"dig": {
+			"alg": "sha256",
+			"val": "5c1ccf0fb1b8f2eaf1e8dd4771305c86050a17ebdbb5a50a1631f56d58255b09"
+		}
+	},
+	"doc": {
+		"$schema": "https://gobl.org/draft-0/bill/invoice",
+		"$regime": "HR",
+		"$addons": [
+			"hr-fiskal-b2c-v1"
+		],
+		"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a11",
+		"type": "standard",
+		"series": "POS1",
+		"code": "1455",
+		"issue_date": "2026-11-06",
+		"issue_time": "16:07:00",
+		"currency": "EUR",
+		"tax": {
+			"ext": {
+				"hr-fiskal-device": "1",
+				"hr-fiskal-premises": "POS1",
+				"hr-fiskal-sequence-scope": "P"
+			}
+		},
+		"supplier": {
+			"name": "Invopop d.o.o.",
+			"tax_id": {
+				"country": "HR",
+				"code": "80432461483"
+			},
+			"people": [
+				{
+					"key": "operator",
+					"name": {
+						"given": "Ivan",
+						"surname": "Horvat"
+					},
+					"identities": [
+						{
+							"type": "OIB",
+							"code": "80432461483"
+						}
+					]
+				}
+			]
+		},
+		"lines": [
+			{
+				"i": 1,
+				"quantity": "2",
+				"item": {
+					"name": "Pelinkovac 0,03 l",
+					"price": "3.1250"
+				},
+				"sum": "6.2500",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "general",
+						"percent": "25.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					},
+					{
+						"cat": "PP",
+						"percent": "3%",
+						"ext": {
+							"untdid-tax-category": "O"
+						}
+					}
+				],
+				"total": "6.2500"
+			}
+		],
+		"payment": {
+			"advances": [
+				{
+					"key": "cash",
+					"description": "Gotovina",
+					"percent": "100%",
+					"amount": "8.00"
+				}
+			]
+		},
+		"totals": {
+			"sum": "6.25",
+			"total": "6.25",
+			"taxes": {
+				"categories": [
+					{
+						"code": "VAT",
+						"rates": [
+							{
+								"key": "standard",
+								"ext": {
+									"untdid-tax-category": "S"
+								},
+								"base": "6.25",
+								"percent": "25.0%",
+								"amount": "1.56"
+							}
+						],
+						"amount": "1.56"
+					},
+					{
+						"code": "PP",
+						"rates": [
+							{
+								"ext": {
+									"untdid-tax-category": "O"
+								},
+								"base": "6.25",
+								"percent": "3%",
+								"amount": "0.19"
+							}
+						],
+						"amount": "0.19"
+					}
+				],
+				"sum": "1.75"
+			},
+			"tax": "1.75",
+			"total_with_tax": "8.00",
+			"payable": "8.00",
+			"advance": "8.00",
+			"due": "0.00"
+		}
+	}
+}

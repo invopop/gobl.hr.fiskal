@@ -1,0 +1,113 @@
+# A pizzeria receipt after a real receipt of 2022 (in kuna; the amounts are
+# kept as euros). Soft drinks and mineral water pay PP too; natural water
+# and 100 % juices without added sugar do not.
+# Drinks pay VAT and the consumption tax (PP); food pays VAT only. The menu
+# price of a drink includes both taxes, which share one base, the price
+# without VAT. GOBL can take only one tax out of a price, so each price here
+# leaves out both: the menu price / 1.28 (25 % VAT + 3 % PP), or / 1.13 for
+# food at 13 % VAT.
+$schema: "https://gobl.org/draft-0/bill/invoice"
+$regime: "HR"
+$addons: ["hr-fiskal-b2c-v1"]
+uuid: "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a13"
+type: standard
+code: "5450"
+issue_date: "2026-11-06"
+issue_time: "21:36:04"
+currency: "EUR"
+tax:
+  ext:
+    hr-fiskal-premises: "POS1"
+    hr-fiskal-device: "1"
+
+supplier:
+  name: "Invopop d.o.o."
+  tax_id:
+    country: "HR"
+    code: "80432461483"
+  people:
+    - key: operator
+      name:
+        given: "Ivan"
+        surname: "Horvat"
+      identities:
+        - type: OIB
+          code: "80432461483"
+
+lines:
+  # Draught beer: 17.00 on the menu
+  - quantity: 1
+    item:
+      name: "Točeno pivo 0,30 l"
+      price: "13.2812"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+  # Draught beer: 20.00 on the menu
+  - quantity: 2
+    item:
+      name: "Točeno pivo 0,50 l"
+      price: "15.6250"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+  # Cedevita, a vitamin soft drink: 15.00 on the menu
+  - quantity: 1
+    item:
+      name: "Cedevita"
+      price: "11.7188"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+  # Mineral water: 13.00 on the menu
+  - quantity: 1
+    item:
+      name: "Mineralna voda 0,25 l"
+      price: "10.1562"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+  # Mixed pizza, large: 57.00 on the menu
+  - quantity: 1
+    item:
+      name: "Pizza miješana, velika"
+      price: "50.4425"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # Seafood pizza, large: 60.00 on the menu
+  - quantity: 1
+    item:
+      name: "Pizza mare, velika"
+      price: "53.0973"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # House pizza, large: 60.00 on the menu
+  - quantity: 1
+    item:
+      name: "Pizza kuće, velika"
+      price: "53.0973"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+payment:
+  advances:
+    - key: cash
+      description: "Gotovina"
+      percent: "100%"
