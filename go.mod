@@ -2,16 +2,10 @@ module github.com/invopop/gobl.hr.fiskal
 
 go 1.25.0
 
-// UNRELEASED DEPENDENCIES: remove before tagging or merging. This pins the
-// unreleased hr regime (gobl) to a branch commit. Pin it to a released
-// version (or a main pseudo-version) once it is merged; the README says what
-// the pin waits for.
-replace github.com/invopop/gobl => github.com/invopop/gobl v0.512.1-0.20261118093935-d8b87c99df75
-
 require (
 	github.com/beevik/etree v1.8.1
 	github.com/google/uuid v1.6.0
-	github.com/invopop/gobl v0.512.0
+	github.com/invopop/gobl v0.512.1-0.20261118093935-d8b87c99df75 // unreleased hr regime, invopop/gobl#724: see the README
 	github.com/russellhaering/goxmldsig v1.6.1
 	github.com/stretchr/testify v1.11.1
 	software.sslmate.com/src/go-pkcs12 v0.7.4

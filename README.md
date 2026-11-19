@@ -251,22 +251,24 @@ holds `Greske` (errors), each with a code and a message.
 
 ### Dependencies not yet released
 
-> **Before tagging or merging**, remove the `replace` block in `go.mod`. It
-> pins gobl to an unreleased branch commit, through its pseudo-version, so
-> that CI can build the module until that branch is released.
+gobl is pinned to an unreleased commit, through its pseudo-version in
+`require`. A `require` line also applies to every module that imports this
+one, so gov-hr gets the same gobl without a `replace` of its own. Other
+Invopop modules do the same on `main`, such as gov-fr with gobl.cii.
 
-| Module | Waits for | Replaced by | Pin |
+| Module | Waits for | Pinned to | Then |
 | --- | --- | --- | --- |
-| `github.com/invopop/gobl` | the `hr` regime (branch `eu3-18-hr-regime`, which [invopop/gobl#724](https://github.com/invopop/gobl/pull/724) carries) | branch commit `d8b87c99` | the gobl release that includes it, or a `main` pseudo-version after merge |
+| `github.com/invopop/gobl` | the `hr` regime (branch `eu3-18-hr-regime`, which [invopop/gobl#724](https://github.com/invopop/gobl/pull/724) carries) | commit `d8b87c99` | require the gobl release that includes it |
 
 To follow a newer commit of the branch, run
-`go mod edit -replace=github.com/invopop/gobl=github.com/invopop/gobl@<commit>`
-then `go mod tidy`. To work against a local checkout instead, point the
-`replace` at its path, and don't commit that.
+`go get github.com/invopop/gobl@<commit>` then `go mod tidy`. To work against
+a local checkout instead, add a `replace` that points at its path, and don't
+commit it: a `replace` applies only when this module itself is built, not in
+the modules that import it.
 
-Add the `release.yaml` workflow of the other GOBL modules at the same time:
-it tags every push to `main`, and a tag made while the `replace` block is in
-place cannot be built by any consumer.
+Add the `release.yaml` workflow of the other GOBL modules once gobl is pinned
+to a release: it tags every push to `main`, and no tagged version should
+depend on an unreleased gobl commit.
 
 ### Tests
 
