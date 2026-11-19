@@ -6,6 +6,7 @@ import (
 	"github.com/invopop/gobl.hr.fiskal/addon/fiskal"
 	"github.com/invopop/gobl/addons/eu/en16931"
 	"github.com/invopop/gobl/bill"
+	"github.com/invopop/gobl/cal"
 	"github.com/invopop/gobl/catalogues/untdid"
 	"github.com/invopop/gobl/cbc"
 	"github.com/invopop/gobl/num"
@@ -146,5 +147,78 @@ func TestPPRule(t *testing.T) {
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
 		assert.Equal(t, "8.00", inv.Totals.Payable.String())
+	})
+}
+
+// Every amount on a drink line includes PP, so PP comes out of each one.
+// Each invoice is 2 × 4.00 on the menu, with VAT and PP in the price, and is
+// calculated twice: GOBL sets an item's price from its list price each
+// time, so the list price must lose its PP too.
+func TestPPIncludedInOtherLineAmounts(t *testing.T) {
+	drink := func() *bill.Line {
+		return menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice)
+	}
+	tests := []struct {
+		name    string
+		edit    func(*bill.Line)
+		payable string
+	}{
+		{"a fixed line charge", func(l *bill.Line) {
+			l.Charges = []*bill.LineCharge{{Amount: num.MakeAmount(50, 2), Reason: "Ice"}}
+		}, "8.50"},
+		{"a line charge by quantity and rate", func(l *bill.Line) {
+			l.Charges = []*bill.LineCharge{{Quantity: num.NewAmount(2, 0), Rate: num.NewAmount(25, 2), Reason: "Ice"}}
+		}, "8.50"},
+		{"a line charge by percent", func(l *bill.Line) {
+			l.Charges = []*bill.LineCharge{{Percent: num.NewPercentage(10, 2), Reason: "Service"}}
+		}, "8.80"},
+		{"a list price with a price discount", func(l *bill.Line) {
+			l.Item.Price = nil
+			l.Item.List = amountPtr("5.00")
+			l.Item.Discount = amountPtr("1.00")
+		}, "8.00"},
+		{"a VAT line with its own percent", func(l *bill.Line) {
+			l.Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Percent: num.NewPercentage(25, 2)}
+		}, "8.00"},
+		{"an exempt VAT line", func(l *bill.Line) {
+			l.Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyExempt}
+		}, "8.00"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := drink()
+			tt.edit(l)
+			inv := menuInvoice(l)
+			require.NoError(t, inv.Calculate())
+			assert.Equal(t, tt.payable, inv.Totals.Payable.String())
+			require.NoError(t, inv.Calculate())
+			assert.Equal(t, tt.payable, inv.Totals.Payable.String(), "after a second calculation")
+		})
+	}
+
+	t.Run("sub-lines", func(t *testing.T) {
+		l := menuLine("Pivo", 1, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice)
+		l.Item.Price = nil
+		l.Breakdown = []*bill.SubLine{
+			{Quantity: num.MakeAmount(1, 0), Item: &org.Item{Name: "Pivo", Price: amountPtr("3.00")}},
+			{Quantity: num.MakeAmount(1, 0), Item: &org.Item{Name: "Limun", Price: amountPtr("1.00")}},
+		}
+		inv := menuInvoice(l)
+		require.NoError(t, inv.Calculate())
+		assert.Equal(t, "4.00", inv.Totals.Payable.String())
+	})
+
+	t.Run("a draft without an issue date uses today's VAT rate", func(t *testing.T) {
+		inv := menuInvoice(drink())
+		inv.IssueDate = cal.Date{}
+		require.NoError(t, inv.Calculate())
+		assert.Equal(t, "8.00", inv.Totals.Payable.String())
+	})
+
+	t.Run("an unknown VAT rate is left for GOBL to refuse", func(t *testing.T) {
+		l := drink()
+		l.Taxes[0].Rate = "unknown"
+		assert.Error(t, menuInvoice(l).Calculate())
+		assert.Equal(t, fiskal.PPIncludedInPrice, l.Taxes[1].Ext.Get(fiskal.ExtKeyPP))
 	})
 }
