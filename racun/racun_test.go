@@ -17,7 +17,7 @@ const (
 // testRequest is a cash invoice of €12.50 with 25 % VAT, issued by
 // Invopop's demo OIB.
 func testRequest() *InvoiceRequest {
-	issued := time.Date(2026, 11, 6, 13, 58, 10, 0, zagreb)
+	issued := time.Date(2026, 11, 6, 13, 58, 10, 0, time.UTC)
 	return &InvoiceRequest{
 		ID: InvoiceRequestID,
 		Header: &Header{
