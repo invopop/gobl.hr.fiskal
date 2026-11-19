@@ -196,6 +196,9 @@ func TestInvoiceRules(t *testing.T) {
 		{"supplier OIB identity that differs from its VAT number", func(inv *bill.Invoice) {
 			inv.Supplier.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: "12345678903"}}
 		}, "25"},
+		{"Croatian business customer without an OIB", func(inv *bill.Invoice) {
+			inv.Customer = &org.Party{Name: "Kupac d.o.o.", TaxID: &tax.Identity{Country: "HR"}}
+		}, "29"},
 		{"no operator", func(inv *bill.Invoice) { inv.Supplier.People = nil }, "14"},
 		{"two operators", func(inv *bill.Invoice) {
 			inv.Supplier.People = append(inv.Supplier.People, inv.Supplier.People[0])
@@ -237,6 +240,24 @@ func TestInvoiceRules(t *testing.T) {
 		err := rules.Validate(inv)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "checksum")
+	})
+
+	t.Run("Croatian business customer outside the VAT system, with an OIB identity", func(t *testing.T) {
+		inv := testInvoice()
+		inv.Customer = &org.Party{
+			Name:       "Kupac d.o.o.",
+			TaxID:      &tax.Identity{Country: "HR"},
+			Identities: []*org.Identity{{Type: hr.IdentityTypeOIB, Code: "93476558444"}},
+		}
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
+	})
+
+	t.Run("private customer with no tax ID", func(t *testing.T) {
+		inv := testInvoice()
+		inv.Customer = &org.Party{Name: "Ana Kovač"}
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
 	})
 
 	t.Run("another currency with an exchange rate to EUR", func(t *testing.T) {

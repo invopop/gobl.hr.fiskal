@@ -116,6 +116,16 @@ The `hr-eracun-v1` addon takes the same supplier for B2B eRačuni. This
 follows the model gobl.fr.ctc uses for French suppliers: the tax ID holds
 only a VAT number, and an identity says who the supplier is.
 
+## Customer
+
+A B2C invoice needs no customer. A Croatian business that pays in cash or by
+card is the exception: CIS must receive its OIB (`OibPrimateljaRacuna`). Give
+it a Croatian tax ID, the same way as a supplier: its VAT number, or only the
+country and an `OIB` identity. A customer with a Croatian tax ID and no OIB is
+rejected, as the invoice would be reported as a sale to a private person.
+`racun` leaves the OIB out for a payment by bank transfer, which CIS refuses
+(error 181).
+
 ## Issue date and time
 
 The invoice must have its `issue_date` and `issue_time`, in Croatian time.

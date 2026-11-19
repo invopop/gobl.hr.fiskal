@@ -182,6 +182,18 @@ func billInvoiceRules() *rules.Set {
 				),
 			),
 		),
+		// A customer with a Croatian tax ID is a Croatian business, whose OIB
+		// the invoice must report when paid in cash or by card (spec v2.7,
+		// p. 10). CIS can't tell a business without its OIB from a private
+		// person, so it would accept the invoice: a tax ID with no code and
+		// no OIB identity is a mistake that only this rule catches.
+		rules.Field("customer",
+			rules.When(is.Func("has a Croatian tax ID", partyHasCroatianTaxID),
+				rules.Assert("29", "invoice customer with a Croatian tax ID requires an OIB: a Croatian VAT number, or with no VAT number an identity of type OIB (OibPrimateljaRacuna)",
+					is.Func("has OIB", partyHasOIB),
+				),
+			),
+		),
 		// CIS receives only the total from an issuer outside the VAT system,
 		// so VAT charged on its invoice would not be reported. Such an issuer
 		// must not show VAT anyway (Art. 90.g of the VAT Act).
@@ -423,6 +435,11 @@ func isOperator(val any) bool {
 func identitiesHaveOIB(val any) bool {
 	ids, _ := val.([]*org.Identity)
 	return org.IdentityForType(ids, hr.IdentityTypeOIB) != nil
+}
+
+func partyHasCroatianTaxID(val any) bool {
+	p, ok := val.(*org.Party)
+	return ok && p != nil && p.TaxID != nil && p.TaxID.Country == l10n.HR.Tax()
 }
 
 // partyHasOIB is true when the party has an OIB, or a foreign tax ID, which
