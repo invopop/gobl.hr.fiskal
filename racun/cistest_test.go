@@ -43,7 +43,7 @@ func invoiceNumber(sentAt time.Time, i int) string {
 }
 
 // cisTestInvoice is a €12.50 card invoice with 25 % VAT, issued at sentAt
-// by Invopop at premises POS1, device 1.
+// by Invopop at premises SHOP1, device 1.
 func cisTestInvoice(cert *Certificate, number, operator string, sentAt time.Time, messageID string) (*InvoiceRequest, error) {
 	now := sentAt.In(zagreb)
 	num := &Number{Sequential: number, Premises: testPremises, Device: "1"}
