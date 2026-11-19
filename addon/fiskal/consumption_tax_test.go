@@ -133,6 +133,13 @@ func TestPPRule(t *testing.T) {
 		inv.Lines[0].Taxes[1].Ext = tax.Extensions{}
 		assertFault(t, inv, faultCode("28"))
 	})
+	t.Run("refuses an unknown value of the extension", func(t *testing.T) {
+		inv := menuInvoice(menuLine("Pivo", 2, "4.00", tax.RateGeneral, "included"))
+		require.NoError(t, inv.Calculate())
+		faults := rules.Validate(inv)
+		require.Error(t, faults)
+		assert.True(t, faults.HasCode(rules.GOBL.Add(fiskal.Namespace).Add("TAX-COMBO").Add("05")), "got %s", faults)
+	})
 	t.Run("adds PP on top of a price that excludes it", func(t *testing.T) {
 		inv := menuInvoice(menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPExcludedFromPrice))
 		require.NoError(t, inv.Calculate())

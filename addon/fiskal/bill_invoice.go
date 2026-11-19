@@ -333,6 +333,14 @@ func taxComboRules() *rules.Set {
 					is.Func("allowed PP percent", ppPercentAllowed),
 				),
 			),
+			// The normalizer takes PP out of the price only for
+			// included-in-price, so any other value would add PP on top of a
+			// menu price that already holds it.
+			rules.Field("ext",
+				rules.Assert("05", fmt.Sprintf("consumption tax (PP) ext %s must be %s or %s", ExtKeyPP, PPIncludedInPrice, PPExcludedFromPrice),
+					tax.ExtensionHasValidCode(ExtKeyPP),
+				),
+			),
 		),
 	)
 }
