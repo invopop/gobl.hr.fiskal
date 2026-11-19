@@ -1,0 +1,126 @@
+# A restaurant receipt with drinks, food and a cover charge, after a real
+# receipt of 2025. On that receipt, the till also charged PP on the cover
+# charge; the law taxes only drinks, so here it pays VAT only.
+# The prices are the menu prices, which include VAT and, on drinks, the
+# consumption tax (PP): both taxes share one base, the price without VAT.
+# prices_include names VAT, and each drink's PP says that its price
+# includes PP too (hr-fiskal-pp: included-in-price). The addon takes PP out of
+# those prices, so the total is the sum of the menu prices.
+$schema: "https://gobl.org/draft-0/bill/invoice"
+$regime: "HR"
+$addons: ["hr-fiskal-b2c-v1"]
+uuid: "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a12"
+type: standard
+code: "1878"
+issue_date: "2026-11-06"
+issue_time: "20:27:53"
+currency: "EUR"
+tax:
+  prices_include: VAT
+  ext:
+    hr-fiskal-premises: "POS1"
+    hr-fiskal-device: "1"
+
+supplier:
+  name: "Invopop d.o.o."
+  tax_id:
+    country: "HR"
+    code: "80432461483"
+  people:
+    - key: operator
+      name:
+        given: "Ivan"
+        surname: "Horvat"
+      identities:
+        - type: OIB
+          code: "80432461483"
+
+lines:
+  # Cider
+  - quantity: 1
+    item:
+      name: "Somersby 0,33 l"
+      price: "4.20"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+        ext:
+          hr-fiskal-pp: included-in-price
+
+  # Draught beer
+  - quantity: 1
+    item:
+      name: "Točeno pivo 0,5 l"
+      price: "4.60"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+        ext:
+          hr-fiskal-pp: included-in-price
+
+  - quantity: 1
+    item:
+      name: "BBQ burger"
+      price: "12.90"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # Pâté
+  - quantity: 1
+    item:
+      name: "Pašteta"
+      price: "6.10"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # Garlic bread
+  - quantity: 1
+    item:
+      name: "Kruh s lukom"
+      price: "4.20"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # Cover charge, per person
+  - quantity: 2
+    item:
+      name: "Postava stola"
+      price: "0.50"
+    taxes:
+      - cat: VAT
+        rate: general
+
+  # Tuna pizza
+  - quantity: 1
+    item:
+      name: "Pizza tuna"
+      price: "12.00"
+    taxes:
+      - cat: VAT
+        rate: reduced
+
+  # White wine, by the litre
+  - quantity: 0.4
+    item:
+      name: "Bijelo vino 1 l"
+      price: "20.00"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+        ext:
+          hr-fiskal-pp: included-in-price
+
+payment:
+  advances:
+    - key: cash
+      description: "Gotovina"
+      percent: "100%"
