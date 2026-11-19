@@ -70,7 +70,7 @@ The `hr-fiskal-b2c-v1` addon sets these on the invoice tax:
 
 The invoice code is the bare sequential number (`BrOznRac`): digits with no
 leading zero. A printed invoice shows the number as
-`BrOznRac/OznPosPr/OznNapUr`, such as `1001/POS1/1`.
+`BrOznRac/OznPosPr/OznNapUr`, such as `1001/SHOP1/1`.
 
 The number can come from two places:
 
@@ -78,8 +78,8 @@ The number can come from two places:
 - **Invopop numbers the invoice.** The invoice arrives without a code, and the
   sequence step of the workflow gives it one. That step keeps one counter for
   each supplier and series, so the addon sets the series from the labels: the
-  premises label for scope `P` (`POS1`), or `<premises>/<device>` for scope `N`
-  (`POS1/1`). CIS refuses leading zeros, so the addon removes them from a
+  premises label for scope `P` (`SHOP1`), or `<premises>/<device>` for scope `N`
+  (`SHOP1/1`). CIS refuses leading zeros, so the addon removes them from a
   code made only of digits: the step's default padding of six digits gives
   `000042`, which becomes `42`. The step must not add a prefix or a suffix,
   and must count per series (not use one fixed sequence for every premises).
@@ -195,13 +195,13 @@ each field.
 		<DatVrijeme>06.11.2026T13:58:10</DatVrijeme>
 		<!-- OznSlijed: what the number counts within, P (premises) or N (device) -->
 		<OznSlijed>P</OznSlijed>
-		<!-- BrRac: invoice number, printed as 1001/POS1/1 -->
+		<!-- BrRac: invoice number, printed as 1001/SHOP1/1 -->
 		<BrRac>
 			<!-- BrOznRac: sequential number, from the invoice code -->
 			<BrOznRac>1001</BrOznRac>
 			<!-- OznPosPr: business premises label, registered with the Tax
 			     Administration -->
-			<OznPosPr>POS1</OznPosPr>
+			<OznPosPr>SHOP1</OznPosPr>
 			<!-- OznNapUr: device (till) label -->
 			<OznNapUr>1</OznNapUr>
 		</BrRac>
@@ -231,7 +231,7 @@ each field.
 		<OibOper>80432461483</OibOper>
 		<!-- ZastKod (zaštitni kod): the ZKI, the MD5 of the RSA-SHA256 signature
 		     of Oib, DatVrijeme, the three BrRac parts and IznosUkupno -->
-		<ZastKod>29f16dcad4dc85441c183d3826c22985</ZastKod>
+		<ZastKod>0d9d3f56d60021b235cb4360d87c8d62</ZastKod>
 		<!-- NakDost (naknadna dostava): late delivery, true for an invoice
 		     issued while CIS could not be reached and sent afterwards -->
 		<NakDost>false</NakDost>

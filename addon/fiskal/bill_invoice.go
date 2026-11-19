@@ -83,8 +83,8 @@ func normalizeCode(code cbc.Code) cbc.Code {
 }
 
 // Series provides the invoice series that matches the numbering scope: the
-// business premises label for scope P, such as "POS1", or the premises and
-// device labels for scope N, such as "POS1/1". It is empty without the
+// business premises label for scope P, such as "SHOP1", or the premises and
+// device labels for scope N, such as "SHOP1/1". It is empty without the
 // labels.
 //
 // An invoice counter belongs to one series. When Invopop numbers the

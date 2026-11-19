@@ -10,7 +10,7 @@
 		<OznSlijed>P</OznSlijed>
 		<BrRac>
 			<BrOznRac>1003</BrOznRac>
-			<OznPosPr>POS1</OznPosPr>
+			<OznPosPr>SHOP1</OznPosPr>
 			<OznNapUr>1</OznNapUr>
 		</BrRac>
 		<Pdv>
@@ -23,7 +23,7 @@
 		<IznosUkupno>105.00</IznosUkupno>
 		<NacinPlac>K</NacinPlac>
 		<OibOper>80432461483</OibOper>
-		<ZastKod>4813d93676b6b766ed4a5d5b385319db</ZastKod>
+		<ZastKod>4b533ac7e45969ac2ebee938d3541228</ZastKod>
 		<NakDost>false</NakDost>
 		<OibPrimateljaRacuna>12345678903</OibPrimateljaRacuna>
 	</Racun>

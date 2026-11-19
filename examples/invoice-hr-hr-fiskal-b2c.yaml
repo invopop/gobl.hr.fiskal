@@ -10,7 +10,7 @@ currency: "EUR"
 tax:
   prices_include: VAT
   ext:
-    hr-fiskal-premises: "POS1"
+    hr-fiskal-premises: "SHOP1"
     hr-fiskal-device: "1"
 
 supplier:

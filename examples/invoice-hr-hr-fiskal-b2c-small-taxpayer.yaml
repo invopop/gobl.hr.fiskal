@@ -11,7 +11,7 @@ issue_time: "13:58:10"
 currency: "EUR"
 tax:
   ext:
-    hr-fiskal-premises: "POS1"
+    hr-fiskal-premises: "SHOP1"
     hr-fiskal-device: "1"
 
 supplier:

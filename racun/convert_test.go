@@ -126,7 +126,7 @@ func TestExampleValues(t *testing.T) {
 		assert.True(t, r.InVATSystem)
 		assert.Equal(t, "06.11.2026T13:58:10", r.IssuedAt)
 		assert.Equal(t, SequencePremises, r.SequenceScope)
-		assert.Equal(t, &Number{Sequential: "1001", Premises: "POS1", Device: "1"}, r.Number)
+		assert.Equal(t, &Number{Sequential: "1001", Premises: "SHOP1", Device: "1"}, r.Number)
 		assert.Equal(t, []*Tax{
 			{Rate: "25.00", Base: "4.00", Amount: "1.00"},
 			{Rate: "13.00", Base: fiveEuros, Amount: "0.65"},

@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "147282257a5f12334e0fa23a58273caf8804f7e54912794cbd619afaf753b3eb"
+			"val": "f61a06c1f72cd0db5dfca69c72a6f83f92612b9c77e6b37d3f62156ec2fe7acd"
 		}
 	},
 	"doc": {
@@ -15,7 +15,7 @@
 		],
 		"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a14",
 		"type": "standard",
-		"series": "POS1",
+		"series": "SHOP1",
 		"code": "2210",
 		"issue_date": "2026-11-06",
 		"issue_time": "18:42:10",
@@ -24,7 +24,7 @@
 			"prices_include": "VAT",
 			"ext": {
 				"hr-fiskal-device": "1",
-				"hr-fiskal-premises": "POS1",
+				"hr-fiskal-premises": "SHOP1",
 				"hr-fiskal-sequence-scope": "P"
 			}
 		},

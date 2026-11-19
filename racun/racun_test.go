@@ -11,7 +11,7 @@ const invopopOIB = "80432461483"
 const (
 	testBase     = "10.00"
 	testTotal    = "12.50"
-	testPremises = "POS1"
+	testPremises = "SHOP1"
 )
 
 // testRequest is a cash invoice of €12.50 with 25 % VAT, issued by
@@ -50,7 +50,7 @@ func fullRequest() *InvoiceRequest {
 	r.NotSubjectAmount = "3.00"
 	r.Fees = []*Fee{{Name: "Povratna naknada", Amount: "0.10"}}
 	r.LateDelivery = true
-	r.HandwrittenNumber = "123/POS1/1"
+	r.HandwrittenNumber = "123/SHOP1/1"
 	r.SpecialPurpose = "x"
 	r.BuyerOIB = "12345678903"
 	return req

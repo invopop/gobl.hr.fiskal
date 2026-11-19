@@ -169,7 +169,7 @@
 	"tax": {
 		"ext": {
 			"hr-fiskal-device": "1",
-			"hr-fiskal-premises": "POS1"
+			"hr-fiskal-premises": "SHOP1"
 		},
 		"prices_include": "VAT"
 	},

@@ -10,7 +10,7 @@
 		<OznSlijed>P</OznSlijed>
 		<BrRac>
 			<BrOznRac>1878</BrOznRac>
-			<OznPosPr>POS1</OznPosPr>
+			<OznPosPr>SHOP1</OznPosPr>
 			<OznNapUr>1</OznNapUr>
 		</BrRac>
 		<Pdv>
@@ -35,7 +35,7 @@
 		<IznosUkupno>53.00</IznosUkupno>
 		<NacinPlac>G</NacinPlac>
 		<OibOper>80432461483</OibOper>
-		<ZastKod>35d8d79bb8a76dc75dbee6adeacd83ff</ZastKod>
+		<ZastKod>fd873f9905ef37fe64e3d12ddb434f5b</ZastKod>
 		<NakDost>false</NakDost>
 	</Racun>
 </RacunZahtjev>

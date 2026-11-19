@@ -24,7 +24,7 @@ func testZKIInput() *ZKIInput {
 }
 
 func TestZKIData(t *testing.T) {
-	assert.Equal(t, "8043246148306.11.2026 09:05:03123POS121245.56", zkiData(testZKIInput()))
+	assert.Equal(t, "8043246148306.11.2026 09:05:03123SHOP121245.56", zkiData(testZKIInput()))
 }
 
 func TestZKI(t *testing.T) {

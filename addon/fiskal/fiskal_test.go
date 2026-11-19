@@ -32,7 +32,7 @@ func testInvoice() *bill.Invoice {
 		IssueTime: cal.NewTime(13, 58, 10),
 		Tax: &bill.Tax{
 			Ext: tax.ExtensionsOf(cbc.CodeMap{
-				fiskal.ExtKeyPremises: "POS1",
+				fiskal.ExtKeyPremises: "SHOP1",
 				fiskal.ExtKeyDevice:   "1",
 			}),
 		},
@@ -260,18 +260,18 @@ func TestNumbering(t *testing.T) {
 		inv.Code = ""
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
-		assert.Equal(t, cbc.Code("POS1"), inv.Series)
+		assert.Equal(t, cbc.Code("SHOP1"), inv.Series)
 	})
 	t.Run("series per device", func(t *testing.T) {
 		inv := testInvoice()
 		inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeySequenceScope, fiskal.SequenceDevice)
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
-		assert.Equal(t, cbc.Code("POS1/1"), inv.Series)
+		assert.Equal(t, cbc.Code("SHOP1/1"), inv.Series)
 	})
 	t.Run("a series that matches the labels", func(t *testing.T) {
 		inv := testInvoice()
-		inv.Series = "POS1"
+		inv.Series = "SHOP1"
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
 	})
@@ -289,19 +289,19 @@ func TestNumbering(t *testing.T) {
 	})
 	t.Run("a series per device with scope P", func(t *testing.T) {
 		inv := testInvoice()
-		inv.Series = "POS1/1"
+		inv.Series = "SHOP1/1"
 		assertFault(t, inv, faultCode("17"))
 	})
 }
 
 func TestSeries(t *testing.T) {
 	ext := func(m cbc.CodeMap) tax.Extensions { return tax.ExtensionsOf(m) }
-	assert.Equal(t, cbc.Code("POS1"), fiskal.Series(ext(cbc.CodeMap{fiskal.ExtKeyPremises: "POS1", fiskal.ExtKeyDevice: "2"})))
-	assert.Equal(t, cbc.Code("POS1/2"), fiskal.Series(ext(cbc.CodeMap{
-		fiskal.ExtKeyPremises: "POS1", fiskal.ExtKeyDevice: "2", fiskal.ExtKeySequenceScope: fiskal.SequenceDevice,
+	assert.Equal(t, cbc.Code("SHOP1"), fiskal.Series(ext(cbc.CodeMap{fiskal.ExtKeyPremises: "SHOP1", fiskal.ExtKeyDevice: "2"})))
+	assert.Equal(t, cbc.Code("SHOP1/2"), fiskal.Series(ext(cbc.CodeMap{
+		fiskal.ExtKeyPremises: "SHOP1", fiskal.ExtKeyDevice: "2", fiskal.ExtKeySequenceScope: fiskal.SequenceDevice,
 	})))
 	assert.Empty(t, fiskal.Series(ext(cbc.CodeMap{fiskal.ExtKeyDevice: "2"})))
-	assert.Empty(t, fiskal.Series(ext(cbc.CodeMap{fiskal.ExtKeyPremises: "POS1", fiskal.ExtKeySequenceScope: fiskal.SequenceDevice})))
+	assert.Empty(t, fiskal.Series(ext(cbc.CodeMap{fiskal.ExtKeyPremises: "SHOP1", fiskal.ExtKeySequenceScope: fiskal.SequenceDevice})))
 }
 
 func TestRounding(t *testing.T) {
