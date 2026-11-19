@@ -25,7 +25,7 @@ func menuLine(name string, qty int64, price string, rate cbc.Key, ppPrice cbc.Co
 		taxes = append(taxes, &tax.Combo{
 			Category: hr.TaxCategoryPP,
 			Percent:  num.NewPercentage(3, 2),
-			Ext:      tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyPPPrice: ppPrice}),
+			Ext:      tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyPP: ppPrice}),
 		})
 	}
 	return &bill.Line{
@@ -60,13 +60,13 @@ func categoryTotal(t *testing.T, inv *bill.Invoice, cat cbc.Code) (string, strin
 
 // A Trogir bar receipt (Feb 2025): 2 × 4.00 at 25 % VAT and 3 % PP.
 func TestPPIncludedInMenuPrice(t *testing.T) {
-	inv := menuInvoice(menuLine("Pelinkovac 0,03 l", 2, "4.00", tax.RateGeneral, fiskal.PPPriceIncluded))
+	inv := menuInvoice(menuLine("Pelinkovac 0,03 l", 2, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice))
 	require.NoError(t, inv.Calculate())
 	require.NoError(t, rules.Validate(inv))
 
 	assert.Equal(t, "3.906250", inv.Lines[0].Item.Price.String(), "4.00 × 1.25 / 1.28: the price keeps its VAT")
 	pp := inv.Lines[0].Taxes.Get(hr.TaxCategoryPP)
-	assert.Equal(t, fiskal.PPPriceExcluded, pp.Ext.Get(fiskal.ExtKeyPPPrice))
+	assert.Equal(t, fiskal.PPExcludedFromPrice, pp.Ext.Get(fiskal.ExtKeyPP))
 	assert.False(t, pp.Ext.Has(untdid.ExtKeyTaxCategory), "PP is not VAT: it has no VAT category")
 	assert.Equal(t, en16931.TaxCategoryStandard, inv.Lines[0].Taxes.Get(tax.CategoryVAT).Ext.Get(untdid.ExtKeyTaxCategory))
 	base, vat := categoryTotal(t, inv, tax.CategoryVAT)
@@ -86,14 +86,14 @@ func TestPPIncludedInMenuPrice(t *testing.T) {
 // and a cover charge at 25 % VAT only. The menu prices add up to the total.
 func TestPPIncludedWithOtherLines(t *testing.T) {
 	inv := menuInvoice(
-		menuLine("Somersby 0,33 l", 1, "4.20", tax.RateGeneral, fiskal.PPPriceIncluded),
-		menuLine("Točeno pivo 0,5 l", 1, "4.60", tax.RateGeneral, fiskal.PPPriceIncluded),
+		menuLine("Somersby 0,33 l", 1, "4.20", tax.RateGeneral, fiskal.PPIncludedInPrice),
+		menuLine("Točeno pivo 0,5 l", 1, "4.60", tax.RateGeneral, fiskal.PPIncludedInPrice),
 		menuLine("BBQ burger", 1, "12.90", tax.RateReduced, ""),
 		menuLine("Pašteta", 1, "6.10", tax.RateReduced, ""),
 		menuLine("Kruh s lukom", 1, "4.20", tax.RateReduced, ""),
 		menuLine("Postava stola", 2, "0.50", tax.RateGeneral, ""),
 		menuLine("Pizza tuna", 1, "12.00", tax.RateReduced, ""),
-		menuLine("Bijelo vino 1 l", 1, "8.00", tax.RateGeneral, fiskal.PPPriceIncluded),
+		menuLine("Bijelo vino 1 l", 1, "8.00", tax.RateGeneral, fiskal.PPIncludedInPrice),
 	)
 	require.NoError(t, inv.Calculate())
 	require.NoError(t, rules.Validate(inv))
@@ -105,7 +105,7 @@ func TestPPIncludedWithOtherLines(t *testing.T) {
 
 // A fixed discount on a drink includes PP too, so PP comes out of it.
 func TestPPIncludedWithLineDiscount(t *testing.T) {
-	l := menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPPriceIncluded)
+	l := menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice)
 	l.Discounts = []*bill.LineDiscount{{Amount: num.MakeAmount(100, 2), Reason: "Happy hour"}}
 	inv := menuInvoice(l)
 	require.NoError(t, inv.Calculate())
@@ -117,7 +117,7 @@ func TestPPIncludedWithLineDiscount(t *testing.T) {
 func TestPPIncludedOutsideVATSystem(t *testing.T) {
 	inv := testInvoice()
 	outsideVAT(inv)
-	inv.Lines = []*bill.Line{menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPPriceIncluded)}
+	inv.Lines = []*bill.Line{menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice)}
 	inv.Lines[0].Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyExempt}
 	require.NoError(t, inv.Calculate())
 	require.NoError(t, rules.Validate(inv))
@@ -126,14 +126,14 @@ func TestPPIncludedOutsideVATSystem(t *testing.T) {
 	assert.Equal(t, "8.00", inv.Totals.Payable.String())
 }
 
-func TestPPPriceRule(t *testing.T) {
+func TestPPRule(t *testing.T) {
 	t.Run("refuses PP without the extension when prices include VAT", func(t *testing.T) {
-		inv := menuInvoice(menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPPriceIncluded))
+		inv := menuInvoice(menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice))
 		inv.Lines[0].Taxes[1].Ext = tax.Extensions{}
 		assertFault(t, inv, faultCode("28"))
 	})
 	t.Run("adds PP on top of a price that excludes it", func(t *testing.T) {
-		inv := menuInvoice(menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPPriceExcluded))
+		inv := menuInvoice(menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPExcludedFromPrice))
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
 		assert.Equal(t, "4.00", inv.Lines[0].Item.Price.String())

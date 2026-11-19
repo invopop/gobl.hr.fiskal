@@ -23,7 +23,7 @@
 				{
 					"cat": "PP",
 					"ext": {
-						"hr-fiskal-pp-price": "included"
+						"hr-fiskal-pp": "included-in-price"
 					},
 					"percent": "3%"
 				}

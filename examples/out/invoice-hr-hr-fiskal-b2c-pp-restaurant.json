@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "50c95c6e01f318529243db0ce9cd845866ba077fc15ae0f6ea2e8253be9321d9"
+			"val": "77a8d4b252037982d17a253704dd88aa6c882823b89009995bd4343394a9c032"
 		}
 	},
 	"doc": {
@@ -73,7 +73,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded"
+							"hr-fiskal-pp": "excluded-from-price"
 						}
 					}
 				],
@@ -101,7 +101,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded"
+							"hr-fiskal-pp": "excluded-from-price"
 						}
 					}
 				],
@@ -234,7 +234,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded"
+							"hr-fiskal-pp": "excluded-from-price"
 						}
 					}
 				],
@@ -286,7 +286,7 @@
 						"rates": [
 							{
 								"ext": {
-									"hr-fiskal-pp-price": "excluded"
+									"hr-fiskal-pp": "excluded-from-price"
 								},
 								"base": "13.13",
 								"percent": "3%",

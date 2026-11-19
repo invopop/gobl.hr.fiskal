@@ -232,7 +232,7 @@ func billInvoiceRules() *rules.Set {
 			rules.Field("lines",
 				rules.Each(
 					rules.Field("taxes",
-						rules.Assert("28", fmt.Sprintf("invoice line with PP needs %s when prices include VAT: say whether the price includes PP", ExtKeyPPPrice),
+						rules.Assert("28", fmt.Sprintf("invoice line with PP needs %s when prices include VAT: say whether the price includes PP", ExtKeyPP),
 							is.Func("PP says whether the price includes it", ppStatesPrice),
 						),
 					),

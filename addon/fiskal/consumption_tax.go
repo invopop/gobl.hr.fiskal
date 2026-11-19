@@ -16,8 +16,8 @@ import (
 const ppRemovalAccuracy = 4
 
 // removeIncludedPP takes the consumption tax (PP) out of the price of each
-// line whose PP has ExtKeyPPPrice set to included, and sets it to excluded,
-// so a second calculation changes nothing. A menu price includes VAT and PP
+// line whose PP has ExtKeyPP set to included-in-price, and sets it to
+// excluded-from-price, so a second calculation changes nothing. A menu price includes VAT and PP
 // on one base, the price without VAT (Local Taxes Act, Art. 23(2)), but
 // prices_include names one category only. With prices_include VAT, the
 // price keeps its VAT, which GOBL takes out as usual: a 30.00 menu price
@@ -25,7 +25,7 @@ const ppRemovalAccuracy = 4
 func removeIncludedPP(inv *bill.Invoice) {
 	for _, l := range inv.Lines {
 		pp := l.Taxes.Get(hr.TaxCategoryPP)
-		if pp == nil || pp.Percent == nil || pp.Ext.Get(ExtKeyPPPrice) != PPPriceIncluded {
+		if pp == nil || pp.Percent == nil || pp.Ext.Get(ExtKeyPP) != PPIncludedInPrice {
 			continue
 		}
 		included := num.MakePercentage(0, 2)
@@ -41,7 +41,7 @@ func removeIncludedPP(inv *bill.Invoice) {
 		removePP(l, func(a num.Amount) num.Amount {
 			return a.Upscale(ppRemovalAccuracy).Multiply(keep).Divide(with)
 		})
-		pp.Ext = pp.Ext.Set(ExtKeyPPPrice, PPPriceExcluded)
+		pp.Ext = pp.Ext.Set(ExtKeyPP, PPExcludedFromPrice)
 	}
 }
 
@@ -138,5 +138,5 @@ func ppStatesPrice(val any) bool {
 		return true
 	}
 	pp := taxes.Get(hr.TaxCategoryPP)
-	return pp == nil || pp.Ext.Has(ExtKeyPPPrice)
+	return pp == nil || pp.Ext.Has(ExtKeyPP)
 }

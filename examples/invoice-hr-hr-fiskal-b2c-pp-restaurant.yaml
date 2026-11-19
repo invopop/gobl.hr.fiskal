@@ -4,7 +4,7 @@
 # The prices are the menu prices, which include VAT and, on drinks, the
 # consumption tax (PP): both taxes share one base, the price without VAT.
 # prices_include names VAT, and each drink's PP says that its price
-# includes PP too (hr-fiskal-pp-price: included). The addon takes PP out of
+# includes PP too (hr-fiskal-pp: included-in-price). The addon takes PP out of
 # those prices, so the total is the sum of the menu prices.
 $schema: "https://gobl.org/draft-0/bill/invoice"
 $regime: "HR"
@@ -47,7 +47,7 @@ lines:
       - cat: PP
         percent: "3%"
         ext:
-          hr-fiskal-pp-price: included
+          hr-fiskal-pp: included-in-price
 
   # Draught beer
   - quantity: 1
@@ -60,7 +60,7 @@ lines:
       - cat: PP
         percent: "3%"
         ext:
-          hr-fiskal-pp-price: included
+          hr-fiskal-pp: included-in-price
 
   - quantity: 1
     item:
@@ -117,7 +117,7 @@ lines:
       - cat: PP
         percent: "3%"
         ext:
-          hr-fiskal-pp-price: included
+          hr-fiskal-pp: included-in-price
 
 payment:
   advances:

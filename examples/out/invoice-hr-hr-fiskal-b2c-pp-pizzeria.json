@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "0c63ff11e9bc57be39711d461a9ddb9f04ec63518e6d75cc1708606c648d7089"
+			"val": "c5ee9f932caba0f85ab2d0c9dab44c0159b4161612f449f1665d0b8adc24d663"
 		}
 	},
 	"doc": {
@@ -73,7 +73,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded"
+							"hr-fiskal-pp": "excluded-from-price"
 						}
 					}
 				],
@@ -101,7 +101,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded"
+							"hr-fiskal-pp": "excluded-from-price"
 						}
 					}
 				],
@@ -129,7 +129,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded"
+							"hr-fiskal-pp": "excluded-from-price"
 						}
 					}
 				],
@@ -157,7 +157,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded"
+							"hr-fiskal-pp": "excluded-from-price"
 						}
 					}
 				],
@@ -272,7 +272,7 @@
 						"rates": [
 							{
 								"ext": {
-									"hr-fiskal-pp-price": "excluded"
+									"hr-fiskal-pp": "excluded-from-price"
 								},
 								"base": "66.41",
 								"percent": "3%",

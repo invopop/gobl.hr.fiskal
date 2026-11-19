@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "ffa6eff26361260f78615520eb53da1540a86ecf5cceb008c37c4eeadcd01e8b"
+			"val": "8806cbf5276eb99a9ea5cd87dc3531bddf69be413e033b3c1badc761bee79a8b"
 		}
 	},
 	"doc": {
@@ -73,7 +73,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded"
+							"hr-fiskal-pp": "excluded-from-price"
 						}
 					}
 				],
@@ -116,7 +116,7 @@
 						"rates": [
 							{
 								"ext": {
-									"hr-fiskal-pp-price": "excluded"
+									"hr-fiskal-pp": "excluded-from-price"
 								},
 								"base": "6.25",
 								"percent": "3%",

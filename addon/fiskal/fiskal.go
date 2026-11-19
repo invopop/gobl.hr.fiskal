@@ -95,11 +95,12 @@ func newAddon() *tax.AddonDef {
 				the municipality's rate, from 0 to 3 %. Both taxes have the same
 				base, the price without VAT, so a menu price includes both.
 				prices_include names VAT only, so with prices_include VAT each PP
-				says whether the line's price includes it, in hr-fiskal-pp-price:
-				included for a menu price, or excluded to add PP on top. The
-				addon takes PP out of an included price, which then holds only
-				VAT (30.00 × 1.25 / 1.28 for 25 % VAT and 3 % PP), and sets
-				excluded. GOBL then works out both taxes, and the total is the
+				says whether the line's price includes it, in hr-fiskal-pp:
+				included-in-price for a menu price, or excluded-from-price to
+				add PP on top. The addon takes PP out of an included price,
+				which then holds only VAT (30.00 × 1.25 / 1.28 for 25 % VAT and
+				3 % PP), and sets excluded-from-price. GOBL then works out both
+				taxes, and the total is the
 				menu price. With prices without VAT, PP is added on top and the
 				extension is not needed.
 
