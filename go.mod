@@ -3,9 +3,12 @@ module github.com/invopop/gobl.hr.fiskal
 go 1.25.0
 
 require (
-	github.com/google/uuid v1.6.0 // indirect
+	github.com/beevik/etree v1.8.1
+	github.com/google/uuid v1.6.0
 	github.com/invopop/gobl v0.512.1-0.20261118093935-d8b87c99df75 // unreleased hr regime, invopop/gobl#724: see the README
+	github.com/russellhaering/goxmldsig v1.6.1
 	github.com/stretchr/testify v1.11.1
+	software.sslmate.com/src/go-pkcs12 v0.7.4
 )
 
 require (
@@ -19,11 +22,13 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/invopop/jsonschema v0.14.0 // indirect
 	github.com/invopop/yaml v0.3.1 // indirect
+	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.2 // indirect
+	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

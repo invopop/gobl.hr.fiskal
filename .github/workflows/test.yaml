@@ -30,8 +30,8 @@ jobs:
       - name: Test
         run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
 
-      # The requests of the examples against FiskalizacijaSchema.xsd, with
-      # xmllint run in a container.
+      # The invoice requests and the expected invoices against
+      # FiskalizacijaSchema.xsd, with xmllint run in a container.
       - name: Invoice fiscalization schema
         run: go test ./racun/ -xsd
 
