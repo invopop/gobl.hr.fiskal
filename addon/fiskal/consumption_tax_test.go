@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/invopop/gobl.hr.fiskal/addon/fiskal"
+	"github.com/invopop/gobl/addons/eu/en16931"
 	"github.com/invopop/gobl/bill"
+	"github.com/invopop/gobl/catalogues/untdid"
 	"github.com/invopop/gobl/cbc"
 	"github.com/invopop/gobl/num"
 	"github.com/invopop/gobl/org"
@@ -63,11 +65,14 @@ func TestPPIncludedInMenuPrice(t *testing.T) {
 	require.NoError(t, rules.Validate(inv))
 
 	assert.Equal(t, "3.906250", inv.Lines[0].Item.Price.String(), "4.00 × 1.25 / 1.28: the price keeps its VAT")
-	assert.Equal(t, fiskal.PPPriceExcluded, inv.Lines[0].Taxes.Get(hr.TaxCategoryPP).Ext.Get(fiskal.ExtKeyPPPrice))
+	pp := inv.Lines[0].Taxes.Get(hr.TaxCategoryPP)
+	assert.Equal(t, fiskal.PPPriceExcluded, pp.Ext.Get(fiskal.ExtKeyPPPrice))
+	assert.False(t, pp.Ext.Has(untdid.ExtKeyTaxCategory), "PP is not VAT: it has no VAT category")
+	assert.Equal(t, en16931.TaxCategoryStandard, inv.Lines[0].Taxes.Get(tax.CategoryVAT).Ext.Get(untdid.ExtKeyTaxCategory))
 	base, vat := categoryTotal(t, inv, tax.CategoryVAT)
 	assert.Equal(t, []string{"6.25", "1.56"}, []string{base, vat})
-	base, pp := categoryTotal(t, inv, hr.TaxCategoryPP)
-	assert.Equal(t, []string{"6.25", "0.19"}, []string{base, pp})
+	base, ppAmount := categoryTotal(t, inv, hr.TaxCategoryPP)
+	assert.Equal(t, []string{"6.25", "0.19"}, []string{base, ppAmount})
 	assert.Equal(t, "8.00", inv.Totals.Payable.String())
 
 	t.Run("a second calculation changes nothing", func(t *testing.T) {

@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "edc79928dc8da47e90e8aefb26c403d08dfff283a6aa256e9285dbb6aa1f9aab"
+			"val": "50c95c6e01f318529243db0ce9cd845866ba077fc15ae0f6ea2e8253be9321d9"
 		}
 	},
 	"doc": {
@@ -73,8 +73,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded",
-							"untdid-tax-category": "O"
+							"hr-fiskal-pp-price": "excluded"
 						}
 					}
 				],
@@ -102,8 +101,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded",
-							"untdid-tax-category": "O"
+							"hr-fiskal-pp-price": "excluded"
 						}
 					}
 				],
@@ -236,8 +234,7 @@
 						"cat": "PP",
 						"percent": "3%",
 						"ext": {
-							"hr-fiskal-pp-price": "excluded",
-							"untdid-tax-category": "O"
+							"hr-fiskal-pp-price": "excluded"
 						}
 					}
 				],
@@ -289,8 +286,7 @@
 						"rates": [
 							{
 								"ext": {
-									"hr-fiskal-pp-price": "excluded",
-									"untdid-tax-category": "O"
+									"hr-fiskal-pp-price": "excluded"
 								},
 								"base": "13.13",
 								"percent": "3%",
