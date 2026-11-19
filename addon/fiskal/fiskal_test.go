@@ -215,7 +215,11 @@ func TestInvoiceRules(t *testing.T) {
 		{"a discount without taxes", func(inv *bill.Invoice) {
 			inv.Discounts = []*bill.Discount{{Amount: num.MakeAmount(10, 2), Reason: "Promo"}}
 		}, "22"},
+		{"a discount with only PP", func(inv *bill.Invoice) {
+			inv.Discounts = []*bill.Discount{{Amount: num.MakeAmount(10, 2), Reason: "Promo", Taxes: ppOnly()}}
+		}, "22"},
 		{"a line without taxes", func(inv *bill.Invoice) { inv.Lines[0].Taxes = nil }, "23"},
+		{"a line with only PP", func(inv *bill.Invoice) { inv.Lines[0].Taxes = ppOnly() }, "23"},
 		{"VAT outside the VAT system", func(inv *bill.Invoice) { outsideVAT(inv) }, "16"},
 	}
 	for _, tt := range tests {
@@ -354,6 +358,15 @@ func TestVATPercent(t *testing.T) {
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
 	})
+}
+
+// ppOnly is a tax set with the consumption tax and no VAT.
+func ppOnly() tax.Set {
+	return tax.Set{{
+		Category: hr.TaxCategoryPP,
+		Percent:  num.NewPercentage(3, 2),
+		Ext:      tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyPP: fiskal.PPExcludedFromPrice}),
+	}}
 }
 
 func TestConsumptionTax(t *testing.T) {

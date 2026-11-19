@@ -260,14 +260,18 @@ func billInvoiceRules() *rules.Set {
 		rules.Field("discounts",
 			rules.Each(
 				rules.Field("taxes",
-					rules.Assert("22", "invoice discount requires VAT: the invoice request has no element for a discount without taxes", is.Present),
+					rules.Assert("22", "invoice discount requires VAT: the invoice request has no element for a discount without VAT",
+						is.Present, is.Func("has VAT", taxesHaveVAT),
+					),
 				),
 			),
 		),
 		rules.Field("lines",
 			rules.Each(
 				rules.Field("taxes",
-					rules.Assert("23", "invoice line requires VAT, with the key exempt or outside-scope when no VAT applies: the invoice request has no element for a line without taxes", is.Present),
+					rules.Assert("23", "invoice line requires VAT, with the key exempt or outside-scope when no VAT applies: the invoice request has no element for a line without VAT",
+						is.Present, is.Func("has VAT", taxesHaveVAT),
+					),
 				),
 			),
 		),
@@ -381,6 +385,14 @@ func chargeIsFee(val any) bool {
 func ppPercentAllowed(val any) bool {
 	p, ok := val.(*num.Percentage)
 	return ok && p != nil && !p.IsNegative() && p.Compare(maxPPPercent) <= 0
+}
+
+// taxesHaveVAT is true when the set has a VAT combo. PP alone is not
+// enough: with no VAT, the amount is in the total but in no VAT breakdown,
+// and CIS refuses the invoice (check v166).
+func taxesHaveVAT(val any) bool {
+	ts, ok := val.(tax.Set)
+	return ok && ts.Get(tax.CategoryVAT) != nil
 }
 
 func taxComboIsVAT(val any) bool {
