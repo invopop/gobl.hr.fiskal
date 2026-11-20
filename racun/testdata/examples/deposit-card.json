@@ -1,0 +1,85 @@
+{
+	"$addons": [
+		"hr-fiskal-b2c-v1"
+	],
+	"$regime": "HR",
+	"$schema": "https://gobl.org/draft-0/bill/invoice",
+	"charges": [
+		{
+			"amount": "0.80",
+			"reason": "Povratna naknada"
+		}
+	],
+	"code": "2210",
+	"currency": "EUR",
+	"issue_date": "2026-11-06",
+	"issue_time": "18:42:10",
+	"lines": [
+		{
+			"item": {
+				"name": "Pivo 0,5 l limenka",
+				"price": "1.29"
+			},
+			"quantity": 6,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Mineralna voda 1,5 l",
+				"price": "0.89"
+			},
+			"quantity": 2,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				}
+			]
+		}
+	],
+	"payment": {
+		"advances": [
+			{
+				"description": "Kartica",
+				"key": "card",
+				"percent": "100%"
+			}
+		]
+	},
+	"supplier": {
+		"name": "Invopop d.o.o.",
+		"people": [
+			{
+				"identities": [
+					{
+						"code": "80432461483",
+						"type": "OIB"
+					}
+				],
+				"key": "operator",
+				"name": {
+					"given": "Ivan",
+					"surname": "Horvat"
+				}
+			}
+		],
+		"tax_id": {
+			"code": "80432461483",
+			"country": "HR"
+		}
+	},
+	"tax": {
+		"ext": {
+			"hr-fiskal-device": "1",
+			"hr-fiskal-premises": "SHOP1"
+		},
+		"prices_include": "VAT"
+	},
+	"type": "standard",
+	"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a14"
+}

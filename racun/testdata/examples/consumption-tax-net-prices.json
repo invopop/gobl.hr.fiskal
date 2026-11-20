@@ -1,0 +1,69 @@
+{
+	"$addons": [
+		"hr-fiskal-b2c-v1"
+	],
+	"$regime": "HR",
+	"$schema": "https://gobl.org/draft-0/bill/invoice",
+	"code": "1457",
+	"currency": "EUR",
+	"issue_date": "2026-11-06",
+	"issue_time": "16:07:00",
+	"lines": [
+		{
+			"item": {
+				"name": "Pelinkovac 0,03 l",
+				"price": "3.20"
+			},
+			"quantity": 2,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				},
+				{
+					"cat": "PP",
+					"percent": "3%"
+				}
+			]
+		}
+	],
+	"payment": {
+		"advances": [
+			{
+				"description": "Gotovina",
+				"key": "cash",
+				"percent": "100%"
+			}
+		]
+	},
+	"supplier": {
+		"name": "Invopop d.o.o.",
+		"people": [
+			{
+				"identities": [
+					{
+						"code": "80432461483",
+						"type": "OIB"
+					}
+				],
+				"key": "operator",
+				"name": {
+					"given": "Ivan",
+					"surname": "Horvat"
+				}
+			}
+		],
+		"tax_id": {
+			"code": "80432461483",
+			"country": "HR"
+		}
+	},
+	"tax": {
+		"ext": {
+			"hr-fiskal-device": "1",
+			"hr-fiskal-premises": "SHOP1"
+		}
+	},
+	"type": "standard",
+	"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a16"
+}

@@ -1,0 +1,308 @@
+{
+	"$schema": "https://gobl.org/draft-0/envelope",
+	"head": {
+		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
+		"dig": {
+			"alg": "sha256",
+			"val": "6ef8ce6ae78c1230b2916332c5f2599592e1e6a2f1103de10645ef83f21a4171"
+		}
+	},
+	"doc": {
+		"$schema": "https://gobl.org/draft-0/bill/invoice",
+		"$regime": "HR",
+		"$addons": [
+			"hr-fiskal-b2c-v1"
+		],
+		"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a12",
+		"type": "standard",
+		"series": "SHOP1",
+		"code": "1878",
+		"issue_date": "2026-11-06",
+		"issue_time": "20:27:53",
+		"currency": "EUR",
+		"tax": {
+			"prices_include": "VAT",
+			"ext": {
+				"hr-fiskal-device": "1",
+				"hr-fiskal-premises": "SHOP1",
+				"hr-fiskal-sequence-scope": "P"
+			}
+		},
+		"supplier": {
+			"name": "Invopop d.o.o.",
+			"tax_id": {
+				"country": "HR",
+				"code": "80432461483"
+			},
+			"people": [
+				{
+					"key": "operator",
+					"name": {
+						"given": "Ivan",
+						"surname": "Horvat"
+					},
+					"identities": [
+						{
+							"type": "OIB",
+							"code": "80432461483"
+						}
+					]
+				}
+			]
+		},
+		"lines": [
+			{
+				"i": 1,
+				"quantity": "1",
+				"item": {
+					"name": "Somersby 0,33 l",
+					"price": "4.101563"
+				},
+				"sum": "4.101563",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "general",
+						"percent": "25.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					},
+					{
+						"cat": "PP",
+						"percent": "3%",
+						"ext": {
+							"hr-fiskal-pp": "excluded-from-price"
+						}
+					}
+				],
+				"total": "4.101563"
+			},
+			{
+				"i": 2,
+				"quantity": "1",
+				"item": {
+					"name": "Točeno pivo 0,5 l",
+					"price": "4.492188"
+				},
+				"sum": "4.492188",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "general",
+						"percent": "25.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					},
+					{
+						"cat": "PP",
+						"percent": "3%",
+						"ext": {
+							"hr-fiskal-pp": "excluded-from-price"
+						}
+					}
+				],
+				"total": "4.492188"
+			},
+			{
+				"i": 3,
+				"quantity": "1",
+				"item": {
+					"name": "BBQ burger",
+					"price": "12.90"
+				},
+				"sum": "12.90",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "reduced",
+						"percent": "13.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					}
+				],
+				"total": "12.90"
+			},
+			{
+				"i": 4,
+				"quantity": "1",
+				"item": {
+					"name": "Pašteta",
+					"price": "6.10"
+				},
+				"sum": "6.10",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "reduced",
+						"percent": "13.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					}
+				],
+				"total": "6.10"
+			},
+			{
+				"i": 5,
+				"quantity": "1",
+				"item": {
+					"name": "Kruh s lukom",
+					"price": "4.20"
+				},
+				"sum": "4.20",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "reduced",
+						"percent": "13.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					}
+				],
+				"total": "4.20"
+			},
+			{
+				"i": 6,
+				"quantity": "2",
+				"item": {
+					"name": "Postava stola",
+					"price": "0.50"
+				},
+				"sum": "1.00",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "general",
+						"percent": "25.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					}
+				],
+				"total": "1.00"
+			},
+			{
+				"i": 7,
+				"quantity": "1",
+				"item": {
+					"name": "Pizza tuna",
+					"price": "12.00"
+				},
+				"sum": "12.00",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "reduced",
+						"percent": "13.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					}
+				],
+				"total": "12.00"
+			},
+			{
+				"i": 8,
+				"quantity": "0.4",
+				"item": {
+					"name": "Bijelo vino 1 l",
+					"price": "19.531250"
+				},
+				"sum": "7.812500",
+				"taxes": [
+					{
+						"cat": "VAT",
+						"key": "standard",
+						"rate": "general",
+						"percent": "25.0%",
+						"ext": {
+							"untdid-tax-category": "S"
+						}
+					},
+					{
+						"cat": "PP",
+						"percent": "3%",
+						"ext": {
+							"hr-fiskal-pp": "excluded-from-price"
+						}
+					}
+				],
+				"total": "7.812500"
+			}
+		],
+		"payment": {
+			"advances": [
+				{
+					"key": "cash",
+					"description": "Gotovina",
+					"percent": "100%",
+					"amount": "53.00"
+				}
+			]
+		},
+		"totals": {
+			"sum": "52.61",
+			"tax_included": "7.53",
+			"total": "45.08",
+			"taxes": {
+				"categories": [
+					{
+						"code": "VAT",
+						"rates": [
+							{
+								"key": "standard",
+								"ext": {
+									"untdid-tax-category": "S"
+								},
+								"base": "13.93",
+								"percent": "25.0%",
+								"amount": "3.48"
+							},
+							{
+								"key": "standard",
+								"ext": {
+									"untdid-tax-category": "S"
+								},
+								"base": "31.15",
+								"percent": "13.0%",
+								"amount": "4.05"
+							}
+						],
+						"amount": "7.53"
+					},
+					{
+						"code": "PP",
+						"rates": [
+							{
+								"ext": {
+									"hr-fiskal-pp": "excluded-from-price"
+								},
+								"base": "13.13",
+								"percent": "3%",
+								"amount": "0.39"
+							}
+						],
+						"amount": "0.39"
+					}
+				],
+				"sum": "7.92"
+			},
+			"tax": "7.92",
+			"total_with_tax": "53.00",
+			"payable": "53.00",
+			"advance": "53.00",
+			"due": "0.00"
+		}
+	}
+}

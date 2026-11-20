@@ -1,0 +1,35 @@
+<RacunZahtjev xmlns="http://www.apis-it.hr/fin/2012/types/f73" Id="RacunZahtjev">
+	<Zaglavlje>
+		<IdPoruke>00000000-0000-4000-8000-000000000000</IdPoruke>
+		<DatumVrijeme>06.11.2026T18:42:10</DatumVrijeme>
+	</Zaglavlje>
+	<Racun>
+		<Oib>80432461483</Oib>
+		<USustPdv>true</USustPdv>
+		<DatVrijeme>06.11.2026T18:42:10</DatVrijeme>
+		<OznSlijed>P</OznSlijed>
+		<BrRac>
+			<BrOznRac>2210</BrOznRac>
+			<OznPosPr>SHOP1</OznPosPr>
+			<OznNapUr>1</OznNapUr>
+		</BrRac>
+		<Pdv>
+			<Porez>
+				<Stopa>25.00</Stopa>
+				<Osnovica>7.62</Osnovica>
+				<Iznos>1.90</Iznos>
+			</Porez>
+		</Pdv>
+		<Naknade>
+			<Naknada>
+				<NazivN>Povratna naknada</NazivN>
+				<IznosN>0.80</IznosN>
+			</Naknada>
+		</Naknade>
+		<IznosUkupno>10.32</IznosUkupno>
+		<NacinPlac>K</NacinPlac>
+		<OibOper>80432461483</OibOper>
+		<ZastKod>d6de736eb9ccc36559162fa0417e9562</ZastKod>
+		<NakDost>false</NakDost>
+	</Racun>
+</RacunZahtjev>
