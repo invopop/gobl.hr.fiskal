@@ -1,10 +1,50 @@
 package racun
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"math/big"
+	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
-// invopopOIB is Invopop's own OIB, the issuer of the test invoices.
+// testCertificate makes a self-signed RSA certificate shaped like a FINA
+// fiscalization certificate.
+func testCertificate(t *testing.T) *Certificate {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+	tmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      finaSubject("FISKAL TEST", "HR"+invopopOIB),
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	require.NoError(t, err)
+	cert, err := x509.ParseCertificate(der)
+	require.NoError(t, err)
+	return &Certificate{Cert: cert, Key: key}
+}
+
+// finaSubject is a subject shaped like a FINA Fiskal certificate's, with
+// the given organizationIdentifier.
+func finaSubject(commonName, organizationID string) pkix.Name {
+	return pkix.Name{
+		CommonName:   commonName,
+		Organization: []string{"INVOPOP"},
+		Country:      []string{"HR"},
+		ExtraNames:   []pkix.AttributeTypeAndValue{{Type: oidOrganizationIdentifier, Value: organizationID}},
+	}
+}
+
+// invopopOIB is Invopop's own OIB, the issuer of the test invoices and the
+// one the demo certificate carries.
 const invopopOIB = "80432461483"
 
 // testBase is the taxable base of every tax in the test invoices.

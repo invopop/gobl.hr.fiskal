@@ -32,7 +32,7 @@ import (
 
 var (
 	update      = flag.Bool("update", false, "write the expected invoices in testdata/out")
-	validateXSD = flag.Bool("xsd", false, "validate the expected invoices against the schema with xmllint in Docker")
+	validateXSD = flag.Bool("xsd", false, "validate the expected and the signed requests against the schema with xmllint in Docker")
 )
 
 const (

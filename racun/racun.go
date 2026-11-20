@@ -10,8 +10,8 @@
 // buyer.
 //
 // NewInvoice and FromInvoice build the Invoice from a GOBL bill.Invoice and
-// compute its ZKI, and AddStamps adds its ZKI, JIR and QR code to the
-// envelope.
+// compute its ZKI. NewRequest wraps it in a request to send now, Sign signs
+// a request, and a Client sends it to CIS and checks CIS's signed answer.
 //
 // The messages follow FiskalizacijaSchema.xsd v1.10 (kept in
 // testdata/schema) and the technical specification "Fiskalizacija računa u

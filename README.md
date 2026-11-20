@@ -1,6 +1,6 @@
 # GOBL ➡️ Croatia Fiskal
 
-Croatian Fiskalizacija 1.0 (B2C invoices) addon and invoice conversion for [GOBL](https://github.com/invopop/gobl).
+Croatian Fiskalizacija 1.0 (B2C invoices) addon and CIS client for [GOBL](https://github.com/invopop/gobl).
 
 Released under the Apache 2.0 [LICENSE](https://github.com/invopop/gobl.hr.fiskal/blob/main/LICENSE), Copyright 2026 [Invopop S.L.](https://invopop.com).
 
@@ -17,7 +17,7 @@ potrošnji", Zakon o fiskalizaciji, NN 89/25), with the Tax Administration's
 invoice fiscalization service, CIS. Croatian law calls these documents
 računi (invoices), the same word as in eRačun; it has no separate term for a
 receipt. The module provides the GOBL addon `hr-fiskal-b2c-v1` in
-`addon/fiskal/`, and the conversion in `racun/`.
+`addon/fiskal/`, and the conversion and client in `racun/`.
 
 The Croatian tax regime itself (`regimes/hr`) lives in GOBL core. The
 Croatian eRačun, the e-invoice businesses exchange under Fiscalization 2.0,
@@ -31,12 +31,18 @@ lives in [gobl.hr.eracun](https://github.com/invopop/gobl.hr.eracun).
   extensions of the invoice tax, the operator as a supplier person (as in
   `hr-eracun-v1`), and the rules CIS needs met. It also defines the stamps of
   a fiscalized invoice: `fiskal-zki`, `fiskal-jir` and `fiskal-qr`.
-- `racun/` — invoice fiscalization: builds the invoice (`Racun`) CIS
-  receives from a GOBL invoice with the `hr-fiskal-b2c-v1` addon, and
-  computes its ZKI (the issuer's protection code). `AddStamps` adds the ZKI,
-  the JIR and the QR code URL to the envelope. The conversion expects a
-  calculated, valid and numbered invoice: the addon rules are the only check
-  on its content, and `racun` does not repeat them.
+- `racun/` — invoice fiscalization: builds the invoice request
+  (`RacunZahtjev`) from a GOBL invoice with the `hr-fiskal-b2c-v1` addon,
+  computes its ZKI (the issuer's protection code), signs it with XML-DSig,
+  and sends it to CIS, checking CIS's signed answer for the JIR. `AddStamps`
+  adds the ZKI, the JIR and the QR code URL to the envelope. The conversion
+  expects a calculated, valid and numbered invoice: the addon rules are the
+  only check on its content, and `racun` does not repeat them.
+- `ca/` — the FINA CA certificates that CIS clients trust, embedded: the demo
+  chain for CIS test and the production chain for production CIS. FINA's CAs
+  are not in the system certificate store, and the CIS servers send their
+  TLS certificate without its intermediate. `racun` trusts the chain of its
+  environment and nothing else.
 - the module root is reserved for tooling built on top of them.
 
 ## Usage
@@ -52,7 +58,8 @@ import (
 
 Declare `hr-fiskal-b2c-v1` on an invoice and `Calculate` + `Validate` will
 run the addon's normalization and rules. To fiscalize it, build the
-invoice with `racun.NewInvoice` and add the stamps with `racun.AddStamps`.
+invoice with `racun.NewInvoice`, wrap it with `racun.NewRequest`, send it
+with `Client.Fiscalize`, and add the stamps with `racun.AddStamps`.
 
 > **Note**: `hr-fiskal-b2c-v1` is not yet in GOBL core's approved
 > external-addon registry. It is added there once this module is released.
@@ -178,15 +185,15 @@ the key `tax`.
 
 ## Invoice fiscalization request
 
-CIS receives the invoice in an invoice request, `RacunZahtjev`, with the
-schema's Croatian element names. This is the request of
+`racun` sends CIS an invoice request, `RacunZahtjev`, with the schema's
+Croatian element names. This is the request built from
 `racun/testdata/examples/cash-prices-include-vat.json`, before it is signed,
 with the meaning of each element. `racun/invoice.go` gives the Go name of
 each field.
 
 ```xml
-<!-- RacunZahtjev: invoice request. Signed, it also holds an XML-DSig
-     <Signature> that points at Id. -->
+<!-- RacunZahtjev: invoice request. Sign adds an XML-DSig <Signature> that
+     points at Id. -->
 <RacunZahtjev xmlns="http://www.apis-it.hr/fin/2012/types/f73" Id="RacunZahtjev">
 	<!-- Zaglavlje: message header -->
 	<Zaglavlje>
@@ -264,6 +271,10 @@ bound paper invoice book, issued while the device was down (`ParagonBrRac`),
 a field the Tax Administration reserves (`SpecNamj`) and the buyer's OIB
 (`OibPrimateljaRacuna`), given only when the buyer is a business.
 
+CIS answers with `RacunOdgovor`. When it accepts the invoice, the answer holds
+the JIR (`Jir`, the unique invoice identifier); when it refuses it, the answer
+holds `Greske` (errors), each with a code and a message.
+
 ## Development
 
 ### Dependencies not yet released
@@ -310,8 +321,25 @@ The tests convert the examples in `racun/testdata/examples` and compare them
 with `racun/testdata/out` (`-update` writes them again; the ZKI uses the
 fixed test key `racun/testdata/test-key.pem`).
 
-`-xsd` checks the requests of the examples against `FiskalizacijaSchema.xsd`
-v1.10 with xmllint in Docker. CI runs it.
+Every call to CIS is replayed from a cassette in `racun/testdata/cistest/`:
+CIS test's real, signed answer (`<name>-answer.xml`) and what the replay
+needs (`<name>.json`: the message ID, when it was sent, the HTTP status and
+the JIR or error code). A normal run fiscalizes each scenario (an accepted
+invoice, a refused one and each example) through the whole client, offline:
+it rebuilds the request for the recorded time and message ID, and checks
+CIS's signature on the recorded answer. Only CIS can sign an answer, so the
+cassettes come from CIS test. To record them again, run with `-record` and
+a FINA demo certificate (keep it in `.certs/`, which git ignores):
+
+```sh
+export CIS_TEST_CERT=$PWD/.certs/demo.p12
+read -rs CIS_TEST_PASSWORD && export CIS_TEST_PASSWORD
+go test ./racun/ -run 'TestCISTest' -record -count=1 -v
+unset CIS_TEST_PASSWORD
+```
+
+`-xsd` checks signed requests and the expected invoices against
+`FiskalizacijaSchema.xsd` v1.10 with xmllint in Docker. CI runs it.
 
 ## Sources
 
