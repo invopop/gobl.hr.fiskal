@@ -17,6 +17,10 @@ import (
 // and of a message ID: a UUID in lowercase hexadecimal.
 var uuidPattern = regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
 
+// errorCodePattern is SifraGreskeType in FiskalizacijaSchema.xsd, the type
+// of an error code in an answer, such as s005.
+var errorCodePattern = regexp.MustCompile(`^s[0-9]{3}$`)
+
 // NamespaceSOAP is the SOAP 1.1 envelope namespace.
 const NamespaceSOAP = "http://schemas.xmlsoap.org/soap/envelope/"
 
@@ -148,7 +152,17 @@ const codeSystemError = "s006"
 // with RequestWritten, and no answer. Any other error is a refusal, an
 // ErrCIS returned with the answer. Either has the first error's code, or the
 // system error's.
+//
+// An error without a valid code breaks the schema, so the answer is an
+// ErrProtocol: the user can't fix a refusal that names no check. The
+// schema allows an empty error message.
 func answerErrors(res *InvoiceResponse) (*InvoiceResponse, error) {
+	for _, e := range res.Errors {
+		if !errorCodePattern.MatchString(e.Code) {
+			return nil, ErrProtocol.WithRequestWritten(true).
+				WithMessage(fmt.Sprintf("the answer has an error whose code %q is not sXXX", e.Code))
+		}
+	}
 	msg := errorsMessage(res.Errors)
 	for _, e := range res.Errors {
 		if e.Code == codeSystemError {

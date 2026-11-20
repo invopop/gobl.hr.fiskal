@@ -294,6 +294,18 @@ func TestAnswerBreaksSpecification(t *testing.T) {
 	t.Run("neither a JIR nor errors", func(t *testing.T) {
 		protocolErr(t, 200, sign(answer(answerHeader)), "neither a JIR nor errors")
 	})
+	for name, greska := range map[string]string{
+		"no code":                      `<PorukaGreske>x</PorukaGreske>`,
+		"an empty code":                `<SifraGreske></SifraGreske><PorukaGreske>x</PorukaGreske>`,
+		"a code that is not sXXX":      `<SifraGreske>s05</SifraGreske><PorukaGreske>x</PorukaGreske>`,
+		"a code with spaces around it": `<SifraGreske> s005 </SifraGreske><PorukaGreske>x</PorukaGreske>`,
+	} {
+		t.Run("an error with "+name, func(t *testing.T) {
+			greske := `<Greske><Greska><SifraGreske>s005</SifraGreske><PorukaGreske>x</PorukaGreske></Greska>` +
+				`<Greska>` + greska + `</Greska></Greske>`
+			protocolErr(t, 500, sign(answer(answerHeader+greske)), "is not sXXX")
+		})
+	}
 	for _, jir := range []string{"not-a-jir", "00000000-C7A1-407F-A1B3-14118C9D1B83", " 00000000-c7a1-407f-a1b3-14118c9d1b83"} {
 		t.Run("a JIR that is not a UUID: "+jir, func(t *testing.T) {
 			protocolErr(t, 200, sign(answer(answerHeader+`<Jir>`+jir+`</Jir>`)), "is not a UUID")
@@ -311,6 +323,12 @@ func TestAnswerErrors(t *testing.T) {
 		return out + `</Greske>`
 	}
 
+	t.Run("a refusal with an empty message, which the schema allows", func(t *testing.T) {
+		data := sign(answer(answerHeader + `<Greske><Greska><SifraGreske>s005</SifraGreske><PorukaGreske></PorukaGreske></Greska></Greske>`))
+		_, err := c.readInvoiceAnswer(500, data)
+		require.ErrorIs(t, err, ErrCIS)
+		assert.Equal(t, "s005", RefusalCode(err))
+	})
 	t.Run("a refusal", func(t *testing.T) {
 		res, err := c.readInvoiceAnswer(500, sign(answer(answerHeader+greske("s005"))))
 		require.ErrorIs(t, err, ErrCIS)
