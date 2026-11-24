@@ -176,7 +176,10 @@ line's price includes it, in the `hr-fiskal-pp` extension of the line tax:
 each PP needs it. For `included-in-price`, the addon takes PP out of the
 price and keeps its VAT (30.00 × 1.25 / 1.28), then sets
 `excluded-from-price`, so a second calculation changes nothing. GOBL then
-works out both taxes, and the total is the menu price.
+works out both taxes, and the total is the menu price. A discount or charge
+on the whole invoice with PP follows the same rule: its amount, or the base of
+its percent, loses PP the same way, so a 1.00 discount on a 4.00 drink gives
+3.00.
 
 A charge without taxes is a fee (`Naknade`), such as a bottle deposit
 (*povratna naknada*). It needs a reason of up to 100 characters (`NazivN`).

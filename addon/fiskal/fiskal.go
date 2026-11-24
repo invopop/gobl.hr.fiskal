@@ -101,8 +101,9 @@ func newAddon() *tax.AddonDef {
 				included-in-price for a menu price, or excluded-from-price to
 				add PP on top. The addon takes PP out of an included price,
 				which then holds only VAT (30.00 × 1.25 / 1.28 for 25 % VAT and
-				3 % PP), and sets excluded-from-price. GOBL then works out both
-				taxes, and the total is the
+				3 % PP), and sets excluded-from-price. A discount or charge with
+				PP, on a line or on the whole invoice, says the same of its
+				amount. GOBL then works out both taxes, and the total is the
 				menu price. With prices without VAT, PP is added on top and the
 				extension is not needed.
 

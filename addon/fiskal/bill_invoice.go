@@ -245,12 +245,31 @@ func billInvoiceRules() *rules.Set {
 		// With prices that include VAT, a till must say whether a drink's
 		// price also includes PP: GOBL would otherwise add PP on top of a
 		// menu price that already holds it, and charge more than the menu.
+		// The same goes for a discount or charge on the whole invoice.
 		rules.When(is.Func("prices include VAT", pricesIncludeVAT),
 			rules.Field("lines",
 				rules.Each(
 					rules.Field("taxes",
 						rules.Assert("28", fmt.Sprintf("invoice line with PP needs %s when prices include VAT: say whether the price includes PP", ExtKeyPP),
 							is.Func("PP says whether the price includes it", ppStatesPrice),
+						),
+					),
+				),
+			),
+			rules.Field("discounts",
+				rules.Each(
+					rules.Field("taxes",
+						rules.Assert("32", fmt.Sprintf("invoice discount with PP needs %s when prices include VAT: say whether the amount includes PP", ExtKeyPP),
+							is.Func("PP says whether the amount includes it", ppStatesPrice),
+						),
+					),
+				),
+			),
+			rules.Field("charges",
+				rules.Each(
+					rules.Field("taxes",
+						rules.Assert("33", fmt.Sprintf("invoice charge with PP needs %s when prices include VAT: say whether the amount includes PP", ExtKeyPP),
+							is.Func("PP says whether the amount includes it", ppStatesPrice),
 						),
 					),
 				),
@@ -349,7 +368,7 @@ func taxComboRules() *rules.Set {
 					is.Func("allowed PP percent", ppPercentAllowed),
 				),
 			),
-			// The normalizer takes PP out of the price only for
+			// The normalizer takes PP out of an amount only for
 			// included-in-price, so any other value would add PP on top of a
 			// menu price that already holds it.
 			rules.Field("ext",

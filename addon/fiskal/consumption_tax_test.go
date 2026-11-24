@@ -114,6 +114,68 @@ func TestPPIncludedWithLineDiscount(t *testing.T) {
 	assert.Equal(t, "7.00", inv.Totals.Payable.String())
 }
 
+// ppTaxes are the taxes of a drink: 25 % VAT and 3 % PP, which says whether
+// the amount includes it unless ppPrice is empty.
+func ppTaxes(ppPrice cbc.Code) tax.Set {
+	pp := &tax.Combo{Category: hr.TaxCategoryPP, Percent: num.NewPercentage(3, 2)}
+	if ppPrice != cbc.CodeEmpty {
+		pp.Ext = tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyPP: ppPrice})
+	}
+	return tax.Set{{Category: tax.CategoryVAT, Rate: tax.RateGeneral}, pp}
+}
+
+// A discount or charge on the whole bill that includes PP loses it as a
+// line's price does, so the total is the till's: 4.00 - 1.00, or 4.00 + 1.00.
+func TestPPIncludedInOrderDiscountsAndCharges(t *testing.T) {
+	beer := func() *bill.Line { return menuLine("Pivo", 1, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice) }
+	tests := []struct {
+		name    string
+		edit    func(inv *bill.Invoice)
+		payable string
+	}{
+		{"fixed discount", func(inv *bill.Invoice) {
+			inv.Discounts = []*bill.Discount{{Amount: num.MakeAmount(100, 2), Reason: "Popust", Taxes: ppTaxes(fiskal.PPIncludedInPrice)}}
+		}, "3.00"},
+		{"percent discount", func(inv *bill.Invoice) {
+			inv.Discounts = []*bill.Discount{{Percent: num.NewPercentage(25, 2), Reason: "Popust", Taxes: ppTaxes(fiskal.PPIncludedInPrice)}}
+		}, "3.00"},
+		{"percent discount of a given base", func(inv *bill.Invoice) {
+			inv.Discounts = []*bill.Discount{{Percent: num.NewPercentage(50, 2), Base: num.NewAmount(200, 2), Reason: "Popust", Taxes: ppTaxes(fiskal.PPIncludedInPrice)}}
+		}, "3.00"},
+		{"fixed charge", func(inv *bill.Invoice) {
+			inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(100, 2), Reason: "Glazba uživo", Taxes: ppTaxes(fiskal.PPIncludedInPrice)}}
+		}, "5.00"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inv := menuInvoice(beer())
+			tt.edit(inv)
+			require.NoError(t, inv.Calculate())
+			require.NoError(t, rules.Validate(inv))
+			assert.Equal(t, tt.payable, inv.Totals.Payable.String())
+			assert.Len(t, inv.Totals.Taxes.Category(hr.TaxCategoryPP).Rates, 1, "one PP rate for CIS, as every PP is excluded-from-price")
+
+			require.NoError(t, inv.Calculate())
+			assert.Equal(t, tt.payable, inv.Totals.Payable.String(), "a second calculation changes nothing")
+		})
+	}
+}
+
+// With prices that include VAT, a discount or charge on the whole bill must
+// say whether its amount includes PP, as a line must.
+func TestPPOrderDiscountsAndChargesStatePrice(t *testing.T) {
+	t.Run("discount", func(t *testing.T) {
+		inv := menuInvoice(menuLine("Pivo", 1, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice))
+		inv.Discounts = []*bill.Discount{{Amount: num.MakeAmount(100, 2), Reason: "Popust", Taxes: ppTaxes("")}}
+		assertFault(t, inv, faultCode("32"))
+	})
+	t.Run("charge", func(t *testing.T) {
+		inv := menuInvoice(menuLine("Pivo", 1, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice))
+		inv.Charges = []*bill.Charge{{Amount: num.MakeAmount(100, 2), Reason: "Glazba uživo", Taxes: ppTaxes("")}}
+		assertFault(t, inv, faultCode("33"))
+	})
+}
+
 // A business not registered for VAT charges PP on its price, with no VAT.
 func TestPPIncludedNotRegisteredForVAT(t *testing.T) {
 	inv := testInvoice()

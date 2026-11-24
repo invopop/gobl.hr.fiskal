@@ -145,13 +145,13 @@ var extensions = []*cbc.Definition{
 		},
 		Desc: i18n.String{
 			i18n.EN: here.Doc(`
-				Whether the price of the line includes its consumption tax (PP),
-				set on the PP tax of the line. A menu price includes both VAT and
-				PP, which share one base, the price without VAT. prices_include
-				names VAT only, so a line whose price also includes PP says so
-				here (included-in-price), and the addon takes PP out of the price
-				and sets excluded-from-price. With prices_include VAT, each PP line
-				must say which.
+				Whether the price of the line, or the amount of the discount or
+				charge, includes its consumption tax (PP), set on its PP tax. A
+				menu price includes both VAT and PP, which share one base, the
+				price without VAT. prices_include names VAT only, so an amount
+				that also includes PP says so here (included-in-price), and the
+				addon takes PP out of it and sets excluded-from-price. With
+				prices_include VAT, each PP must say which.
 			`),
 		},
 		Values: []*cbc.Definition{
