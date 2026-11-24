@@ -1,0 +1,52 @@
+# The bar receipt of the pp-excluded example, with prices without VAT, as
+# an ERP sends them: 2 x 3.20. GOBL adds VAT and the consumption tax (PP)
+# on top, on the same base: base 6.40, VAT 1.60, PP 0.19, total 8.19.
+# Without prices_include, no price can include PP, so the drink's PP needs
+# no hr-fiskal-pp.
+$schema: "https://gobl.org/draft-0/bill/invoice"
+$regime: "HR"
+$addons: ["hr-fiskal-b2c-v1"]
+uuid: "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a16"
+type: standard
+code: "1457"
+issue_date: "2026-11-06"
+issue_time: "16:07:00"
+currency: "EUR"
+tax:
+  ext:
+    hr-fiskal-premises: "SHOP1"
+    hr-fiskal-device: "1"
+
+supplier:
+  name: "Invopop d.o.o."
+  tax_id:
+    country: "HR"
+    code: "80432461483"
+  ext:
+    hr-fiskal-vat-status: "registered"
+  people:
+    - key: operator
+      name:
+        given: "Ivan"
+        surname: "Horvat"
+      identities:
+        - type: OIB
+          code: "80432461483"
+
+lines:
+  # Pelinkovac, a herbal liqueur
+  - quantity: 2
+    item:
+      name: "Pelinkovac 0,03 l"
+      price: "3.20"
+    taxes:
+      - cat: VAT
+        rate: general
+      - cat: PP
+        percent: "3%"
+
+payment:
+  advances:
+    - key: cash
+      description: "Gotovina"
+      percent: "100%"

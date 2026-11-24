@@ -1,0 +1,181 @@
+{
+	"$addons": [
+		"hr-fiskal-b2c-v1"
+	],
+	"$regime": "HR",
+	"$schema": "https://gobl.org/draft-0/bill/invoice",
+	"code": "1878",
+	"currency": "EUR",
+	"issue_date": "2026-11-06",
+	"issue_time": "20:27:53",
+	"lines": [
+		{
+			"item": {
+				"name": "Somersby 0,33 l",
+				"price": "4.20"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				},
+				{
+					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp": "included-in-price"
+					},
+					"percent": "3%"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Točeno pivo 0,5 l",
+				"price": "4.60"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				},
+				{
+					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp": "included-in-price"
+					},
+					"percent": "3%"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "BBQ burger",
+				"price": "12.90"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "reduced"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Pašteta",
+				"price": "6.10"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "reduced"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Kruh s lukom",
+				"price": "4.20"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "reduced"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Postava stola",
+				"price": "0.50"
+			},
+			"quantity": 2,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Pizza tuna",
+				"price": "12.00"
+			},
+			"quantity": 1,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "reduced"
+				}
+			]
+		},
+		{
+			"item": {
+				"name": "Bijelo vino 1 l",
+				"price": "20.00"
+			},
+			"quantity": 0.4,
+			"taxes": [
+				{
+					"cat": "VAT",
+					"rate": "general"
+				},
+				{
+					"cat": "PP",
+					"ext": {
+						"hr-fiskal-pp": "included-in-price"
+					},
+					"percent": "3%"
+				}
+			]
+		}
+	],
+	"payment": {
+		"advances": [
+			{
+				"description": "Gotovina",
+				"key": "cash",
+				"percent": "100%"
+			}
+		]
+	},
+	"supplier": {
+		"ext": {
+			"hr-fiskal-vat-status": "registered"
+		},
+		"name": "Invopop d.o.o.",
+		"people": [
+			{
+				"identities": [
+					{
+						"code": "80432461483",
+						"type": "OIB"
+					}
+				],
+				"key": "operator",
+				"name": {
+					"given": "Ivan",
+					"surname": "Horvat"
+				}
+			}
+		],
+		"tax_id": {
+			"code": "80432461483",
+			"country": "HR"
+		}
+	},
+	"tax": {
+		"ext": {
+			"hr-fiskal-device": "1",
+			"hr-fiskal-premises": "SHOP1"
+		},
+		"prices_include": "VAT"
+	},
+	"type": "standard",
+	"uuid": "019a9b10-3a41-7c2e-8f5d-6b7c8d9e0a12"
+}
