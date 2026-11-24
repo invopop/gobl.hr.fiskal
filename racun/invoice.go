@@ -2,11 +2,30 @@ package racun
 
 import (
 	"encoding/xml"
+	"regexp"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 // InvoiceRequestID is the Id attribute of an InvoiceRequest, which its
 // signature references as "#RacunZahtjev" (§7).
 const InvoiceRequestID = "RacunZahtjev"
+
+// zagreb is Croatian local time. A message's times have no zone, so a
+// moment, such as when a request is sent, is written as a Croatian clock
+// shows it. Loading it needs the time zone database on the host; without
+// it, the package refuses to start.
+var zagreb = mustLocation("Europe/Zagreb")
+
+func mustLocation(name string) *time.Location {
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		panic(err)
+	}
+	return loc
+}
 
 // InvoiceRequest fiscalizes one invoice (RacunZahtjev).
 type InvoiceRequest struct {
@@ -15,6 +34,21 @@ type InvoiceRequest struct {
 	ID      string   `xml:"Id,attr"`
 	Header  *Header  `xml:"Zaglavlje"`
 	Invoice *Invoice `xml:"Racun"`
+}
+
+// NewRequest wraps an Invoice in a request to send now: the request's Id, a
+// new message ID, and the time on a Croatian clock as the send time. Build
+// a new request for every send, retries included: CIS needs a new message
+// ID each time, and the send time is when it is built.
+func NewRequest(inv *Invoice) *InvoiceRequest {
+	return &InvoiceRequest{
+		ID: InvoiceRequestID,
+		Header: &Header{
+			MessageID: uuid.NewString(),
+			SentAt:    time.Now().In(zagreb).Format(DateTimeFormat),
+		},
+		Invoice: inv,
+	}
 }
 
 // Header heads every request (Zaglavlje).
@@ -178,4 +212,55 @@ type OtherTax struct {
 type Fee struct {
 	Name   string `xml:"NazivN"`
 	Amount string `xml:"IznosN"`
+}
+
+// InvoiceResponse is CIS's answer to an InvoiceRequest (RacunOdgovor). It
+// holds a JIR or errors.
+type InvoiceResponse struct {
+	XMLName struct{}        `xml:"http://www.apis-it.hr/fin/2012/types/f73 RacunOdgovor"`
+	ID      string          `xml:"Id,attr"`
+	Header  *ResponseHeader `xml:"Zaglavlje"`
+	// JIR is the unique invoice identifier CIS assigns.
+	JIR    string           `xml:"Jir,omitempty"`
+	Errors []*ResponseError `xml:"Greske>Greska,omitempty"`
+}
+
+// ResponseHeader heads every answer (Zaglavlje).
+type ResponseHeader struct {
+	// MessageID repeats the request's MessageID.
+	MessageID string `xml:"IdPoruke"`
+	SentAt    string `xml:"DatumVrijeme"`
+}
+
+// ResponseError is one error in an answer (Greska).
+type ResponseError struct {
+	// Code is the error code, such as "s005" (SifraGreske).
+	Code    string `xml:"SifraGreske"`
+	Message string `xml:"PorukaGreske"`
+}
+
+// CodeRestrictive is the error of an invoice that breaks CIS's restrictive
+// checks (s013), such as an issue date more than 30 days old (176). The
+// codes of the checks it breaks are only in its message: "Račun sadrži
+// restriktivne greške: 179".
+const CodeRestrictive = "s013"
+
+// restrictiveCode is one code of a restrictive check, such as 176.
+var restrictiveCode = regexp.MustCompile(`\b\d{3}\b`)
+
+// RestrictiveCodes returns the codes of the restrictive checks the invoice
+// breaks, such as "176" (spec v2.7, §2.6), in the order CIS gives them.
+func (r *InvoiceResponse) RestrictiveCodes() []string {
+	var codes []string
+	for _, e := range r.Errors {
+		if e.Code != CodeRestrictive {
+			continue
+		}
+		list := e.Message
+		if i := strings.LastIndex(list, ":"); i >= 0 {
+			list = list[i+1:]
+		}
+		codes = append(codes, restrictiveCode.FindAllString(list, -1)...)
+	}
+	return codes
 }
