@@ -141,6 +141,19 @@ addon does not fill in a missing time with the current time. A normalizer
 runs on every calculation, so it would use the time when a draft was first
 calculated, not the time when the invoice was issued.
 
+## Payment method
+
+The payment method (`NacinPlac`) is an element of the invoice: CIS receives
+it, and the printed invoice shows it (Fiscalization Act, Art. 2(7) and
+Art. 7(1)(3)). The invoice must give it, and the addon does not fill it in:
+
+- A sale paid at the till records each payment as an advance, with its means
+  key: `cash` (`G`), `card` (`K`), `credit-transfer` (`T`), or `other` (`O`) for a
+  method CIS does not list. Advances with different methods are sent as `O`,
+  as the spec asks.
+- An invoice paid later gives the payment instructions, such as
+  `credit-transfer` (`T`).
+
 ## Operator
 
 The operator is the person who issued the invoice: the person at the till,

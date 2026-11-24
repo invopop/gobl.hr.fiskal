@@ -123,6 +123,11 @@ func newAddon() *tax.AddonDef {
 				the issue time goes into the ZKI (the issuer's protection code).
 				The addon does not fill in a missing time.
 
+				The invoice must give its payment method, which CIS receives and
+				the printed invoice shows: an advance with its means key for a
+				sale paid at the till, or the payment instructions. A method CIS
+				does not list uses the key other.
+
 				Once fiscalized, the invoice is stamped with the ZKI, the JIR and the
 				URL of the QR code to print.
 

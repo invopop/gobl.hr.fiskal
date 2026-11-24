@@ -214,6 +214,9 @@ func TestInvoiceRules(t *testing.T) {
 			inv.Supplier.People = append(inv.Supplier.People, inv.Supplier.People[0])
 		}, "14"},
 		{"operator without an OIB", func(inv *bill.Invoice) { inv.Supplier.People[0].Identities = nil }, "15"},
+		{"no payment", func(inv *bill.Invoice) { inv.Payment = nil }, "34"},
+		{"a payment with no advance or instructions", func(inv *bill.Invoice) { inv.Payment = &bill.PaymentDetails{} }, "34"},
+		{"an advance without a payment means", func(inv *bill.Invoice) { inv.Payment.Advances[0].Key = "" }, "35"},
 		{"a credit note", func(inv *bill.Invoice) { inv.Type = bill.InvoiceTypeCreditNote }, "18"},
 		{"a negative total", func(inv *bill.Invoice) { inv.Lines[0].Item.Price = num.NewAmount(-250, 2) }, "19"},
 		{"a fee without a reason", func(inv *bill.Invoice) {
@@ -255,6 +258,13 @@ func TestInvoiceRules(t *testing.T) {
 	t.Run("Croatian business customer not registered for VAT, with its OIB in the tax ID", func(t *testing.T) {
 		inv := testInvoice()
 		inv.Customer = &org.Party{Name: "Kupac d.o.o.", TaxID: &tax.Identity{Country: "HR", Code: "93476558444"}}
+		require.NoError(t, inv.Calculate())
+		require.NoError(t, rules.Validate(inv))
+	})
+
+	t.Run("payment instructions with no advance, for a bank transfer", func(t *testing.T) {
+		inv := testInvoice()
+		inv.Payment = &bill.PaymentDetails{Instructions: &pay.Instructions{Key: pay.MeansKeyCreditTransfer}}
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
 	})

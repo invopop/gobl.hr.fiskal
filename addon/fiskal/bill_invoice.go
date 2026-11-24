@@ -134,6 +134,22 @@ func billInvoiceRules() *rules.Set {
 		rules.Assert("03", "invoice must be in EUR or provide an exchange rate to EUR: CIS receives the amounts in euros",
 			currency.CanConvertTo(currency.EUR),
 		),
+		// The payment method is an element of the invoice, reported and
+		// printed (Fiscalization Act, Art. 2(7) and Art. 7(1)(3)). The till
+		// knows it, so the addon does not fill it in: CIS uses O (other) for
+		// several methods or one not on its list, not for an unknown one.
+		rules.Assert("34", "invoice payment requires the payment method: an advance, for a sale paid at the till, or payment instructions (NacinPlac)",
+			is.Func("has a payment method", hasPaymentMethod),
+		),
+		rules.Field("payment",
+			rules.Field("advances",
+				rules.Each(
+					rules.Field("key",
+						rules.Assert("35", "invoice payment advance requires the payment means key, such as cash or card; other for a method CIS does not list (NacinPlac)", is.Present),
+					),
+				),
+			),
+		),
 		// The normalizer always sets the invoice tax, so it needs no rule.
 		rules.Field("tax",
 			rules.Field("ext",
@@ -476,6 +492,15 @@ func seriesMatchesScope(val any) bool {
 		return true
 	}
 	return inv.Series == Series(inv.Tax.Ext)
+}
+
+func hasPaymentMethod(val any) bool {
+	inv, ok := val.(*bill.Invoice)
+	if !ok || inv == nil {
+		return true
+	}
+	p := inv.Payment
+	return p != nil && (len(p.Advances) > 0 || p.Instructions != nil)
 }
 
 func supplierNotRegisteredForVAT(val any) bool {
