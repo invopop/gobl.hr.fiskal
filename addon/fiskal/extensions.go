@@ -7,7 +7,8 @@ import (
 )
 
 // Extension keys. All are set on the invoice tax (bill/tax), except
-// ExtKeyPP, which is set on a tax combo.
+// ExtKeyPP, which is set on a tax combo, and ExtKeyVATStatus, which is set
+// on the supplier.
 //
 // TODO: declare each extension's usage (cbc.Usage), as gobl.fr.ctc does, once
 // the hr regime branch is rebased on a GOBL release that has it.
@@ -31,6 +32,24 @@ const (
 	// ExtKeyPP says whether the price of a line includes its consumption
 	// tax (PP).
 	ExtKeyPP cbc.Key = "hr-fiskal-pp"
+
+	// ExtKeyVATStatus says whether the supplier is registered for VAT
+	// (USustPdv).
+	//
+	// The hr-eracun-v1 addon needs the same fact. Each addon defines its own
+	// key until both show what they share; then it moves to the hr regime,
+	// and this key becomes an alias that a normalizer migrates.
+	ExtKeyVATStatus cbc.Key = "hr-fiskal-vat-status"
+)
+
+// Whether the supplier is registered for VAT (ExtKeyVATStatus)
+const (
+	// VATStatusRegistered marks a supplier registered for VAT, which charges
+	// VAT and reports its VAT breakdown.
+	VATStatusRegistered cbc.Code = "registered"
+	// VATStatusNotRegistered marks a supplier not registered for VAT, such as
+	// a small taxpayer exempt under Art. 90(1) of the VAT Act.
+	VATStatusNotRegistered cbc.Code = "not-registered"
 )
 
 // Whether a line's price includes its consumption tax (ExtKeyPP)
@@ -143,6 +162,32 @@ var extensions = []*cbc.Definition{
 			{Code: PPExcludedFromPrice, Name: i18n.String{
 				i18n.EN: "The price does not include PP",
 				i18n.HR: "Cijena ne uključuje porez na potrošnju",
+			}},
+		},
+	},
+	{
+		Key: ExtKeyVATStatus,
+		Name: i18n.String{
+			i18n.EN: "Croatia Fiskal: VAT Status",
+			i18n.HR: "Hrvatska fiskalizacija: U sustavu PDV-a",
+		},
+		Desc: i18n.String{
+			i18n.EN: here.Doc(`
+				Whether the supplier is registered for VAT (USustPdv), set on the
+				supplier. Every Croatian supplier has an OIB in its tax ID, so the
+				tax ID can't say it. A supplier not registered for VAT, such as a
+				small taxpayer, must not charge VAT, and CIS receives only the
+				total of its invoices.
+			`),
+		},
+		Values: []*cbc.Definition{
+			{Code: VATStatusRegistered, Name: i18n.String{
+				i18n.EN: "Registered for VAT",
+				i18n.HR: "U sustavu PDV-a",
+			}},
+			{Code: VATStatusNotRegistered, Name: i18n.String{
+				i18n.EN: "Not registered for VAT",
+				i18n.HR: "Nije u sustavu PDV-a",
 			}},
 		},
 	},

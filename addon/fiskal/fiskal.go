@@ -82,13 +82,15 @@ func newAddon() *tax.AddonDef {
 				self-service device. It is the same convention as the hr-eracun-v1
 				addon.
 
-				A supplier outside the VAT system, such as a small taxpayer under
-				Art. 90(1) of the VAT Act, has no VAT number: its tax ID has only the
-				country HR, and its OIB goes in an identity of type OIB. It must not
-				charge VAT: its lines use the VAT key exempt, and an invoice with
-				exempt VAT gets a note citing the exemption. A supply outside the
-				scope of VAT uses the key outside-scope, with no note. CIS receives
-				only the total of its invoices, with no VAT breakdown.
+				The supplier's tax ID holds its OIB, whether or not it is registered
+				for VAT. The supplier says whether it is registered for VAT in the
+				hr-fiskal-vat-status extension: registered or not-registered. A
+				supplier not registered for VAT, such as a small taxpayer under
+				Art. 90(1) of the VAT Act, must not charge VAT: its lines use the
+				VAT key exempt, and an invoice with exempt VAT gets a note citing
+				the exemption. A supply outside the scope of VAT uses the key
+				outside-scope, with no note. CIS receives only the total of its
+				invoices, with no VAT breakdown.
 
 				A drink served by a catering business also pays the consumption
 				tax (porez na potrošnju): its line has the tax PP next to VAT, with

@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "3609b35cff53763b17f09e570470140f462e52e2ee18aa0cda200c250d91e84a"
+			"val": "f45e2686d7b355c880ef02014ee50457da9c5d464672db9c893ac6bb102bd2f8"
 		}
 	},
 	"doc": {
@@ -47,7 +47,10 @@
 						}
 					]
 				}
-			]
+			],
+			"ext": {
+				"hr-fiskal-vat-status": "registered"
+			}
 		},
 		"lines": [
 			{

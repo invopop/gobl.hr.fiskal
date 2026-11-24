@@ -114,10 +114,10 @@ func TestPPIncludedWithLineDiscount(t *testing.T) {
 	assert.Equal(t, "7.00", inv.Totals.Payable.String())
 }
 
-// A business outside the VAT system charges PP on its price, with no VAT.
-func TestPPIncludedOutsideVATSystem(t *testing.T) {
+// A business not registered for VAT charges PP on its price, with no VAT.
+func TestPPIncludedNotRegisteredForVAT(t *testing.T) {
 	inv := testInvoice()
-	outsideVAT(inv)
+	notRegistered(inv)
 	inv.Lines = []*bill.Line{menuLine("Pivo", 2, "4.00", tax.RateGeneral, fiskal.PPIncludedInPrice)}
 	inv.Lines[0].Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyExempt}
 	require.NoError(t, inv.Calculate())

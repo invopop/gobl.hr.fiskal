@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "653db765ea80f20721a874ae3e6ebcaf06a35a3851cb051c47dd82150eaa33a4"
+			"val": "f9af18dbce68e881c447b36db6a61abfa7bbd05f842765520bc8aca830b7d88a"
 		}
 	},
 	"doc": {
@@ -37,14 +37,9 @@
 		"supplier": {
 			"name": "Obrt Kava",
 			"tax_id": {
-				"country": "HR"
+				"country": "HR",
+				"code": "80432461483"
 			},
-			"identities": [
-				{
-					"type": "OIB",
-					"code": "80432461483"
-				}
-			],
 			"people": [
 				{
 					"key": "operator",
@@ -59,7 +54,10 @@
 						}
 					]
 				}
-			]
+			],
+			"ext": {
+				"hr-fiskal-vat-status": "not-registered"
+			}
 		},
 		"lines": [
 			{

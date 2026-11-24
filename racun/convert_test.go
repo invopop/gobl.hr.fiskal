@@ -258,7 +258,7 @@ func TestAddonExtensions(t *testing.T) {
 	inv.Tax.Ext = inv.Tax.Ext.
 		Set(fiskal.ExtKeySequenceScope, fiskal.SequenceDevice).
 		Set(fiskal.ExtKeyPaperNumber, "123/458/5")
-	outsideVAT(inv)
+	notRegistered(inv)
 	r, err := FromInvoice(inv, key)
 	require.NoError(t, err)
 	assert.Equal(t, SequenceDevice, r.SequenceScope)
@@ -272,7 +272,7 @@ func TestAddonExtensions(t *testing.T) {
 // has cents, which the exempt total once rounded away.
 func TestSmallTaxpayer(t *testing.T) {
 	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-	outsideVAT(inv)
+	notRegistered(inv)
 	inv.Tax.PricesInclude = ""
 	for _, l := range inv.Lines {
 		l.Taxes = tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt}}
@@ -288,12 +288,12 @@ func TestSmallTaxpayer(t *testing.T) {
 }
 
 // A small taxpayer's invoice has only its total, whichever VAT key its
-// lines use: CIS gets no breakdown from an issuer outside the VAT system.
+// lines use: CIS gets no breakdown from an issuer not registered for VAT.
 func TestSmallTaxpayerSendsOnlyTheTotal(t *testing.T) {
 	for _, key := range []cbc.Key{tax.KeyExempt, tax.KeyOutsideScope, tax.KeyZero} {
 		t.Run(key.String(), func(t *testing.T) {
 			inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-			outsideVAT(inv)
+			notRegistered(inv)
 			inv.Tax.PricesInclude = ""
 			for _, l := range inv.Lines {
 				l.Taxes = tax.Set{{Category: tax.CategoryVAT, Key: key}}
@@ -351,11 +351,11 @@ func TestConsumptionTax(t *testing.T) {
 	assert.Equal(t, "8.00", r.Total)
 }
 
-// An issuer outside the VAT system pays the consumption tax too, so CIS
+// An issuer not registered for VAT pays the consumption tax too, so CIS
 // gets it without the VAT breakdown.
 func TestSmallTaxpayerConsumptionTax(t *testing.T) {
 	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-	outsideVAT(inv)
+	notRegistered(inv)
 	drinkWithPP(inv, &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyExempt})
 	require.NoError(t, inv.Calculate())
 	require.NoError(t, rules.Validate(inv))
@@ -371,7 +371,7 @@ func TestSmallTaxpayerConsumptionTax(t *testing.T) {
 // adds to the total, and to no tax breakdown.
 func TestFees(t *testing.T) {
 	deposit := &bill.Charge{Amount: num.MakeAmount(20, 2), Reason: "Povratna naknada"}
-	t.Run("in the VAT system", func(t *testing.T) {
+	t.Run("registered for VAT", func(t *testing.T) {
 		inv := withCharges(t, []*bill.Charge{deposit}, nil)
 		r, err := FromInvoice(inv, testKey(t))
 		require.NoError(t, err)
@@ -382,9 +382,9 @@ func TestFees(t *testing.T) {
 		}, r.VAT)
 		assert.Equal(t, "10.85", r.Total)
 	})
-	t.Run("outside the VAT system", func(t *testing.T) {
+	t.Run("not registered for VAT", func(t *testing.T) {
 		inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-		outsideVAT(inv)
+		notRegistered(inv)
 		inv.Tax.PricesInclude = ""
 		for _, l := range inv.Lines {
 			l.Taxes = tax.Set{{Category: tax.CategoryVAT, Key: tax.KeyExempt}}
@@ -541,20 +541,17 @@ func checkSchema(t *testing.T, docs map[string][]byte) {
 	require.NoError(t, err)
 }
 
-// outsideVAT makes the supplier one outside the VAT system: a tax ID with
-// only the country HR, and its OIB as an identity.
-func outsideVAT(inv *bill.Invoice) {
-	oib := inv.Supplier.TaxID.Code
-	inv.Supplier.TaxID = &tax.Identity{Country: "HR"}
-	inv.Supplier.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: oib}}
+// notRegistered makes the supplier one not registered for VAT. Its tax ID
+// keeps its OIB.
+func notRegistered(inv *bill.Invoice) {
+	inv.Supplier.Ext = inv.Supplier.Ext.Set(fiskal.ExtKeyVATStatus, fiskal.VATStatusNotRegistered)
 }
 
-// A Croatian business buyer outside the VAT system has only an OIB
-// identity, which is sent as its OIB.
-func TestBuyerOIBFromIdentity(t *testing.T) {
+// A Croatian business buyer not registered for VAT gives its OIB in its tax
+// ID, as one registered for VAT does.
+func TestBuyerOIBNotRegisteredForVAT(t *testing.T) {
 	inv := loadExample(t, "business-buyer-card.json").Extract().(*bill.Invoice)
-	inv.Customer.TaxID = &tax.Identity{Country: "HR"}
-	inv.Customer.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: "12345678903"}}
+	inv.Customer.TaxID = &tax.Identity{Country: "HR", Code: "12345678903"}
 	r, err := FromInvoice(inv, testKey(t))
 	require.NoError(t, err)
 	assert.Equal(t, "12345678903", r.BuyerOIB)

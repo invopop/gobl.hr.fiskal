@@ -40,6 +40,9 @@
 		]
 	},
 	"supplier": {
+		"ext": {
+			"hr-fiskal-vat-status": "registered"
+		},
 		"name": "Invopop d.o.o.",
 		"people": [
 			{

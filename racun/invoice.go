@@ -31,7 +31,7 @@ type Header struct {
 type Invoice struct {
 	// IssuerOIB is the OIB of the business that issues the invoice.
 	IssuerOIB string `xml:"Oib"`
-	// InVATSystem says whether the issuer is in the VAT system.
+	// InVATSystem says whether the issuer is registered for VAT.
 	InVATSystem bool `xml:"USustPdv"`
 	// IssuedAt is the issue date and time printed on the invoice, in
 	// DateTimeFormat.

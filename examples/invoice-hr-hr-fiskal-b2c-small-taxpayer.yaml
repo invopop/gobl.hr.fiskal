@@ -1,5 +1,6 @@
-# A small taxpayer (mali porezni obveznik), outside the VAT system under
-# Art. 90(1) of the VAT Act: no VAT, and a note citing the exemption.
+# A small taxpayer (mali porezni obveznik), not registered for VAT under
+# Art. 90(1) of the VAT Act: no VAT, and a note citing the exemption. Its
+# tax ID still holds its OIB.
 $schema: "https://gobl.org/draft-0/bill/invoice"
 $regime: "HR"
 $addons: ["hr-fiskal-b2c-v1"]
@@ -18,9 +19,9 @@ supplier:
   name: "Obrt Kava"
   tax_id:
     country: "HR"
-  identities:
-    - type: OIB
-      code: "80432461483"
+    code: "80432461483"
+  ext:
+    hr-fiskal-vat-status: "not-registered"
   people:
     - key: operator
       name:

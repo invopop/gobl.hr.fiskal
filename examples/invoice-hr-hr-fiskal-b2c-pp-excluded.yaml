@@ -24,6 +24,8 @@ supplier:
   tax_id:
     country: "HR"
     code: "80432461483"
+  ext:
+    hr-fiskal-vat-status: "registered"
   people:
     - key: operator
       name:

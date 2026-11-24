@@ -27,8 +27,9 @@ lives in [gobl.hr.eracun](https://github.com/invopop/gobl.hr.eracun).
 
 - `addon/fiskal/` — the GOBL addon `hr-fiskal-b2c-v1` for invoices
   fiscalized at the time of the sale: the business premises and device
-  labels, the numbering scope, the VAT system and the paper invoice number as
-  extensions of the invoice tax, the operator as a supplier person (as in
+  labels, the numbering scope and the paper invoice number as extensions of
+  the invoice tax, the supplier's VAT status as an extension of the supplier,
+  the operator as a supplier person (as in
   `hr-eracun-v1`), and the rules CIS needs met. It also defines the stamps of
   a fiscalized invoice: `fiskal-zki`, `fiskal-jir` and `fiskal-qr`.
 - `racun/` — invoice fiscalization: builds the invoice (`Racun`) CIS
@@ -77,9 +78,9 @@ The number can come from two places:
 - **A till that numbers its own invoices** sends the code with the labels.
 - **Invopop numbers the invoice.** The invoice arrives without a code, and the
   sequence step of the workflow gives it one. That step keeps one counter for
-  each supplier and series, so the addon sets the series from the labels: the
-  premises label for scope `P` (`SHOP1`), or `<premises>/<device>` for scope `N`
-  (`SHOP1/1`). CIS refuses leading zeros, so the addon removes them from a
+  each supplier tax ID and series, so the addon sets the series from the
+  labels: the premises label for scope `P` (`SHOP1`), or `<premises>/<device>`
+  for scope `N` (`SHOP1/1`). CIS refuses leading zeros, so the addon removes them from a
   code made only of digits: the step's default padding of six digits gives
   `000042`, which becomes `42`. The step must not add a prefix or a suffix,
   and must count per series (not use one fixed sequence for every premises).
@@ -89,42 +90,48 @@ never numbers two premises or two devices.
 
 ## Supplier
 
-The supplier is the issuer (`Oib`), and its tax ID says whether it is in the
-VAT system (`USustPdv`). A supplier in the VAT system gives its Croatian VAT
-number. A supplier outside the VAT system, such as a small taxpayer exempt
-from VAT under Art. 90(1) of the VAT Act, has no VAT number: its `tax_id` has
-only the country, which keeps the regime, and its OIB goes in an `OIB`
-identity:
+The supplier is the issuer (`Oib`). Every Croatian citizen, resident and
+company has an OIB, whether or not it is registered for VAT, so the
+supplier's `tax_id` always holds its OIB. The supplier says whether it is
+registered for VAT (`USustPdv`) in the `hr-fiskal-vat-status` extension, with
+no default:
 
 ```yaml
 supplier:
   tax_id:
     country: "HR"
-  identities:
-    - type: OIB
-      code: "80432461483"
+    code: "80432461483"
+  ext:
+    hr-fiskal-vat-status: "registered" # or "not-registered"
 ```
 
-A supplier outside the VAT system must not charge VAT. Its lines use the VAT
+A supplier not registered for VAT, such as a small taxpayer exempt from VAT
+under Art. 90(1) of the VAT Act, must not charge VAT. Its lines use the VAT
 key `exempt`, and the addon adds a note citing the exemption to an invoice
 with exempt VAT, as Art. 79(3) requires. A supply outside the scope of VAT
 uses the key `outside-scope` and gets no note. `racun` sends CIS only the
 total of such an invoice, with no VAT breakdown: CIS checks the breakdown only
-for an issuer in the VAT system.
+for an issuer registered for VAT.
 
-The `hr-eracun-v1` addon takes the same supplier for B2B eRačuni. This
-follows the model gobl.fr.ctc uses for French suppliers: the tax ID holds
-only a VAT number, and an identity says who the supplier is.
+The OIB is in the tax ID, and not only in an identity, because Invopop's
+sequence step keeps one counter for each supplier tax ID and series: suppliers
+whose tax ID has no code would share a counter. An `OIB` identity on the
+supplier is allowed, as `hr-eracun-v1` asks of a supplier not registered for
+VAT, but this addon reads only the tax ID.
+
+The `hr-eracun-v1` addon needs the same fact. Each addon defines its own
+extension for now; once both show what they share, it moves to the `hr`
+regime, and a normalizer migrates `hr-fiskal-vat-status` to the new key.
 
 ## Customer
 
 A B2C invoice needs no customer. A Croatian business that pays in cash or by
 card is the exception: CIS must receive its OIB (`OibPrimateljaRacuna`). Give
-it a Croatian tax ID, the same way as a supplier: its VAT number, or only the
-country and an `OIB` identity. A customer with a Croatian tax ID and no OIB is
-rejected, as the invoice would be reported as a sale to a private person.
-`racun` leaves the OIB out for a payment by bank transfer, which CIS refuses
-(error 181).
+it a Croatian tax ID with its OIB as the code, the same way as a supplier,
+whether or not it is registered for VAT. A customer with a Croatian tax ID and
+no code is rejected, as the invoice would be reported as a sale to a private
+person. `racun` leaves the OIB out for a payment by bank transfer, which CIS
+refuses (error 181).
 
 ## Issue date and time
 
@@ -160,7 +167,7 @@ other person is taken in their place.
 A line can carry the consumption tax (*porez na potrošnju*, the `PP` tax
 category of GOBL's `hr` regime) next to its VAT, at a percent from 0 to 3 %.
 `racun` reports the PP totals in `Pnp`, one entry for each rate. An issuer
-outside the VAT system reports them too.
+not registered for VAT reports them too.
 
 A menu price includes VAT and PP, which share one base: the price without
 VAT. `prices_include` names one category only, so each PP says whether the

@@ -4,8 +4,8 @@
 // addon/fiskal) and be valid: the addon's rules check the fields the Invoice
 // takes, so the conversion does not check their format again. The Invoice
 // takes the issuer's OIB, the issue date and time, the number with the
-// business premises and device labels, the numbering scope, the VAT system,
-// the VAT breakdown, the total, the payment method, the operator's OIB, the
+// business premises and device labels, the numbering scope, whether the
+// issuer is registered for VAT, the VAT breakdown, the total, the payment method, the operator's OIB, the
 // paper invoice number and the buyer's OIB from the invoice. An invoice in
 // another currency is converted to euros first, with its exchange rate.
 
@@ -87,7 +87,7 @@ func FromInvoice(inv *bill.Invoice, key crypto.Signer) (*Invoice, error) {
 	if ext.Get(fiskal.ExtKeySequenceScope) == fiskal.SequenceDevice {
 		r.SequenceScope = SequenceDevice
 	}
-	r.InVATSystem = fiskal.PartyHasVATNumber(inv.Supplier)
+	r.InVATSystem = fiskal.RegisteredForVAT(inv.Supplier)
 	addTaxes(r, inv)
 	addConsumptionTax(r, inv)
 	addFees(r, inv)
@@ -200,7 +200,7 @@ func addConsumptionTax(r *Invoice, inv *bill.Invoice) {
 
 // addFees adds the fees (Naknade), such as a bottle deposit: the charges
 // without taxes, each by its reason and amount. The addon rules give each
-// one a reason. An issuer outside the VAT system charges them too, so
+// one a reason. An issuer not registered for VAT charges them too, so
 // dropVATBreakdown keeps them.
 func addFees(r *Invoice, inv *bill.Invoice) {
 	for _, c := range inv.Charges {
@@ -246,14 +246,14 @@ func addTaxes(r *Invoice, inv *bill.Invoice) {
 	}
 }
 
-// dropVATBreakdown leaves out the VAT breakdown of an issuer outside the VAT
-// system, such as a small taxpayer: the VAT entries (Pdv), the exempt
+// dropVATBreakdown leaves out the VAT breakdown of an issuer not registered
+// for VAT, such as a small taxpayer: the VAT entries (Pdv), the exempt
 // amount (IznosOslobPdv) and the amount not subject to tax
 // (IznosNePodlOpor). The Invoice then has only its total.
 //
 // No source says which of these fields holds a small taxpayer's sales, so
 // the Invoice makes no claim about it. CIS checks the breakdown against the
-// total only for an issuer in the VAT system (checks v160, v161 and v166,
+// total only for an issuer registered for VAT (checks v160, v161 and v166,
 // spec v2.7, p. 212), and the spec's examples with USustPdv false carry no
 // breakdown. Till software does the same: "Kod obveznika koji nisu u
 // sustavu pdv-a ne smije biti nikakvih poreza u fiskalnoj XML datoteci"
@@ -313,12 +313,11 @@ func meansMethod(k cbc.Key) PaymentMethod {
 	return PaymentOther
 }
 
-// buyerOIB is the customer's OIB, for an invoice to a Croatian business: its
-// Croatian VAT number, or the OIB identity of a business outside the VAT
-// system, whose tax ID has only the country HR. It is mandatory for one paid
-// in cash or by card (§2.1.1.1). CIS takes it only for a B2B invoice, so a
-// customer without a Croatian tax ID, such as a private person with an OIB
-// identity, has none.
+// buyerOIB is the customer's OIB, for an invoice to a Croatian business: the
+// code of its Croatian tax ID, whether or not it is registered for VAT. It
+// is mandatory for one paid in cash or by card (§2.1.1.1). CIS takes it only
+// for a B2B invoice, so a customer without a Croatian tax ID, such as a
+// private person, has none.
 func buyerOIB(inv *bill.Invoice) string {
 	c := inv.Customer
 	if c == nil || c.TaxID == nil || c.TaxID.Country != l10n.HR.Tax() {

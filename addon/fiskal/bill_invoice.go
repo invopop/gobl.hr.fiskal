@@ -88,9 +88,9 @@ func normalizeCode(code cbc.Code) cbc.Code {
 // labels.
 //
 // An invoice counter belongs to one series. When Invopop numbers the
-// invoices, its sequence service keeps one counter for each supplier and
-// series, so this series gives one counter for each business premises, or
-// for each device, as the numbering scope requires. A till that numbers its
+// invoices, its sequence service keeps one counter for each supplier tax ID
+// and series, so this series gives one counter for each business premises,
+// or for each device, as the numbering scope requires. A till that numbers its
 // own invoices can leave the series empty.
 func Series(ext tax.Extensions) cbc.Code {
 	premises := ext.Get(ExtKeyPremises)
@@ -156,16 +156,23 @@ func billInvoiceRules() *rules.Set {
 		),
 		rules.Field("supplier",
 			rules.Field("tax_id",
-				rules.Assert("11", "invoice supplier tax ID is required, with country HR: its code is the VAT number, left out by a supplier outside the VAT system (USustPdv)", is.Present),
+				rules.Assert("11", "invoice supplier tax ID is required, with country HR and the supplier's OIB (Oib)", is.Present),
 				rules.Field("country",
 					rules.Assert("12", "invoice supplier tax ID must be Croatian (Oib)", is.In(l10n.HR.Tax())),
 				),
+				rules.Field("code",
+					rules.Assert("13", "invoice supplier tax ID code is required: the supplier's OIB, also when it is not registered for VAT (Oib)", is.Present),
+				),
 			),
-			rules.Assert("13", "invoice supplier requires an OIB: a Croatian VAT number, or with no VAT number an identity of type OIB (Oib)",
-				is.Func("has OIB", partyHasOIB),
-			),
-			rules.Assert("25", "invoice supplier identity of type OIB must match its Croatian VAT number (Oib)",
-				is.Func("OIB matches VAT number", partyOIBMatchesVATNumber),
+			// No default: a wrong status reaches CIS with no error, and only
+			// the supplier knows it.
+			rules.Field("ext",
+				rules.Assert("30", fmt.Sprintf("invoice supplier ext requires %s: whether the supplier is registered for VAT (USustPdv)", ExtKeyVATStatus),
+					tax.ExtensionsRequire(ExtKeyVATStatus),
+				),
+				rules.Assert("31", fmt.Sprintf("invoice supplier ext %s must be %s or %s (USustPdv)", ExtKeyVATStatus, VATStatusRegistered, VATStatusNotRegistered),
+					tax.ExtensionHasValidCode(ExtKeyVATStatus),
+				),
 			),
 			rules.Field("people",
 				rules.Assert("14", "invoice supplier requires exactly one person with the operator key: the person at the till, or the supplier for a self-service device (OibOper)",
@@ -185,21 +192,23 @@ func billInvoiceRules() *rules.Set {
 		// A customer with a Croatian tax ID is a Croatian business, whose OIB
 		// the invoice must report when paid in cash or by card (spec v2.7,
 		// p. 10). CIS can't tell a business without its OIB from a private
-		// person, so it would accept the invoice: a tax ID with no code and
-		// no OIB identity is a mistake that only this rule catches.
+		// person, so it would accept the invoice: a tax ID with no code is a
+		// mistake that only this rule catches.
 		rules.Field("customer",
 			rules.When(is.Func("has a Croatian tax ID", partyHasCroatianTaxID),
-				rules.Assert("29", "invoice customer with a Croatian tax ID requires an OIB: a Croatian VAT number, or with no VAT number an identity of type OIB (OibPrimateljaRacuna)",
-					is.Func("has OIB", partyHasOIB),
+				rules.Field("tax_id",
+					rules.Field("code",
+						rules.Assert("29", "invoice customer with a Croatian tax ID requires its OIB as the tax ID code (OibPrimateljaRacuna)", is.Present),
+					),
 				),
 			),
 		),
-		// CIS receives only the total from an issuer outside the VAT system,
+		// CIS receives only the total from an issuer not registered for VAT,
 		// so VAT charged on its invoice would not be reported. Such an issuer
 		// must not show VAT anyway (Art. 90.g of the VAT Act).
-		rules.When(is.Func("outside the VAT system", outsideVATSystem),
+		rules.When(is.Func("supplier not registered for VAT", supplierNotRegisteredForVAT),
 			rules.Field("totals",
-				rules.Assert("16", "invoice from a supplier with no VAT number (supplier tax ID code), outside the VAT system, must not charge VAT: CIS receives only its total (Art. 90.g of the VAT Act)",
+				rules.Assert("16", "invoice from a supplier not registered for VAT must not charge VAT: CIS receives only its total (Art. 90.g of the VAT Act)",
 					is.Func("charges no VAT", totalsChargeNoVAT),
 				),
 			),
@@ -442,31 +451,6 @@ func partyHasCroatianTaxID(val any) bool {
 	return ok && p != nil && p.TaxID != nil && p.TaxID.Country == l10n.HR.Tax()
 }
 
-// partyHasOIB is true when the party has an OIB, or a foreign tax ID, which
-// rule 12 refuses on its own.
-func partyHasOIB(val any) bool {
-	p, ok := val.(*org.Party)
-	if !ok || p == nil || (p.TaxID != nil && p.TaxID.Country != l10n.HR.Tax()) {
-		return true
-	}
-	return PartyOIB(p) != cbc.CodeEmpty
-}
-
-// partyOIBMatchesVATNumber says whether a party with both a Croatian VAT
-// number and an OIB identity has the same OIB in each. PartyOIB reads only
-// the VAT number then, so a typo in either would go unnoticed.
-func partyOIBMatchesVATNumber(val any) bool {
-	p, ok := val.(*org.Party)
-	if !ok || !PartyHasVATNumber(p) || p.TaxID.Country != l10n.HR.Tax() {
-		return true
-	}
-	id := org.IdentityForType(p.Identities, hr.IdentityTypeOIB)
-	if id == nil {
-		return true
-	}
-	return NormalizeOIB(id.Code.String()) == PartyOIB(p)
-}
-
 func seriesMatchesScope(val any) bool {
 	inv, ok := val.(*bill.Invoice)
 	if !ok || inv == nil || inv.Tax == nil || inv.Series == cbc.CodeEmpty {
@@ -475,9 +459,9 @@ func seriesMatchesScope(val any) bool {
 	return inv.Series == Series(inv.Tax.Ext)
 }
 
-func outsideVATSystem(val any) bool {
+func supplierNotRegisteredForVAT(val any) bool {
 	inv, ok := val.(*bill.Invoice)
-	return ok && inv != nil && partyOutsideVAT(inv.Supplier)
+	return ok && inv != nil && notRegisteredForVAT(inv.Supplier)
 }
 
 // totalsChargeNoVAT is true when no VAT rate in the totals has a percentage

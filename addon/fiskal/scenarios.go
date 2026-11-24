@@ -15,11 +15,11 @@ const NoteSmallTaxpayer = "Oslobođeno PDV-a temeljem čl. 90. st. 1. Zakona o p
 var invoiceScenarios = &tax.ScenarioSet{
 	Schema: bill.ShortSchemaInvoice,
 	List: []*tax.Scenario{
-		// Supplier outside the VAT system with exempt supplies: a small
+		// Supplier not registered for VAT with exempt supplies: a small
 		// taxpayer. A supply outside the scope of VAT is not exempt, so it
 		// gets no note.
 		{
-			Filter:     func(doc any) bool { return outsideVATSystem(doc) && hasExemptVAT(doc) },
+			Filter:     func(doc any) bool { return supplierNotRegisteredForVAT(doc) && hasExemptVAT(doc) },
 			Categories: []cbc.Code{tax.CategoryVAT},
 			Note: &tax.Note{
 				Category: tax.CategoryVAT,
