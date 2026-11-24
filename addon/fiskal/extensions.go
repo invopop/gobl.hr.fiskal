@@ -1,17 +1,17 @@
 package fiskal
 
 import (
+	"github.com/invopop/gobl/bill"
 	"github.com/invopop/gobl/cbc"
 	"github.com/invopop/gobl/i18n"
+	"github.com/invopop/gobl/org"
 	"github.com/invopop/gobl/pkg/here"
+	"github.com/invopop/gobl/tax"
 )
 
 // Extension keys. All are set on the invoice tax (bill/tax), except
 // ExtKeyPP, which is set on a tax combo, and ExtKeyVATStatus, which is set
-// on the supplier.
-//
-// TODO: declare each extension's usage (cbc.Usage), as gobl.fr.ctc does, once
-// the hr regime branch is rebased on a GOBL release that has it.
+// on the supplier. Each definition's Usage says so.
 const (
 	// ExtKeyPremises is the business premises label registered in
 	// ePorezna (OznPosPr).
@@ -69,9 +69,15 @@ const (
 	SequenceDevice cbc.Code = "N"
 )
 
+// usageIn is the usage of an extension of this addon set on schema.
+func usageIn(schema string) *cbc.Usage {
+	return &cbc.Usage{Keys: []cbc.Key{V1}, Schemas: []string{schema}}
+}
+
 var extensions = []*cbc.Definition{
 	{
-		Key: ExtKeyPremises,
+		Key:   ExtKeyPremises,
+		Usage: usageIn(bill.ShortSchemaTax),
 		Name: i18n.String{
 			i18n.EN: "Croatia Fiskal: Business Premises",
 			i18n.HR: "Hrvatska fiskalizacija: Oznaka poslovnog prostora",
@@ -85,7 +91,8 @@ var extensions = []*cbc.Definition{
 		Pattern: `^[0-9a-zA-Z]{1,20}$`,
 	},
 	{
-		Key: ExtKeyDevice,
+		Key:   ExtKeyDevice,
+		Usage: usageIn(bill.ShortSchemaTax),
 		Name: i18n.String{
 			i18n.EN: "Croatia Fiskal: Device",
 			i18n.HR: "Hrvatska fiskalizacija: Oznaka naplatnog uređaja",
@@ -100,7 +107,8 @@ var extensions = []*cbc.Definition{
 		Pattern: `^[1-9][0-9]{0,19}$`,
 	},
 	{
-		Key: ExtKeySequenceScope,
+		Key:   ExtKeySequenceScope,
+		Usage: usageIn(bill.ShortSchemaTax),
 		Name: i18n.String{
 			i18n.EN: "Croatia Fiskal: Numbering Scope",
 			i18n.HR: "Hrvatska fiskalizacija: Oznaka slijednosti",
@@ -123,7 +131,8 @@ var extensions = []*cbc.Definition{
 		},
 	},
 	{
-		Key: ExtKeyPaperNumber,
+		Key:   ExtKeyPaperNumber,
+		Usage: usageIn(bill.ShortSchemaTax),
 		Name: i18n.String{
 			i18n.EN: "Croatia Fiskal: Paper Invoice Number",
 			i18n.HR: "Hrvatska fiskalizacija: Broj računa iz uvezane knjige računa",
@@ -138,7 +147,8 @@ var extensions = []*cbc.Definition{
 		Pattern: `^.{1,100}$`,
 	},
 	{
-		Key: ExtKeyPP,
+		Key:   ExtKeyPP,
+		Usage: usageIn(tax.ShortSchemaCombo),
 		Name: i18n.String{
 			i18n.EN: "Croatia Fiskal: Consumption Tax in the Price",
 			i18n.HR: "Hrvatska fiskalizacija: Porez na potrošnju u cijeni",
@@ -166,7 +176,8 @@ var extensions = []*cbc.Definition{
 		},
 	},
 	{
-		Key: ExtKeyVATStatus,
+		Key:   ExtKeyVATStatus,
+		Usage: usageIn(org.ShortSchemaParty),
 		Name: i18n.String{
 			i18n.EN: "Croatia Fiskal: VAT Status",
 			i18n.HR: "Hrvatska fiskalizacija: U sustavu PDV-a",

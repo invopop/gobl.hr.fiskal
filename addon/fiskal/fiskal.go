@@ -162,6 +162,7 @@ func newAddon() *tax.AddonDef {
 			},
 		},
 		Extensions: extensions,
+		Stamps:     stamps,
 		Scenarios:  []*tax.ScenarioSet{invoiceScenarios},
 	}
 }
