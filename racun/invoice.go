@@ -98,8 +98,6 @@ type Invoice struct {
 	// invoice that got no JIR. It is not in the ZKI, so the ZKI does not
 	// change.
 	LateDelivery bool `xml:"NakDost"`
-	// SpecialPurpose is reserved by the Tax Administration (SpecNamj).
-	SpecialPurpose string `xml:"SpecNamj,omitempty"`
 	// BuyerOIB is only for invoices to businesses paid in cash or by card
 	// (OibPrimateljaRacuna).
 	BuyerOIB string `xml:"OibPrimateljaRacuna,omitempty"`
@@ -128,7 +126,6 @@ func (r *Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		OperatorOIB      string        `xml:"OibOper"`
 		ZKI              string        `xml:"ZastKod"`
 		LateDelivery     bool          `xml:"NakDost"`
-		SpecialPurpose   string        `xml:"SpecNamj,omitempty"`
 		BuyerOIB         string        `xml:"OibPrimateljaRacuna,omitempty"`
 	}{
 		IssuerOIB:        r.IssuerOIB,
@@ -144,7 +141,6 @@ func (r *Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		OperatorOIB:      r.OperatorOIB,
 		ZKI:              r.ZKI,
 		LateDelivery:     r.LateDelivery,
-		SpecialPurpose:   r.SpecialPurpose,
 		BuyerOIB:         r.BuyerOIB,
 	}
 	if len(r.VAT) > 0 {

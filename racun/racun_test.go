@@ -90,7 +90,6 @@ func fullRequest() *InvoiceRequest {
 	r.NotSubjectAmount = "3.00"
 	r.Fees = []*Fee{{Name: "Povratna naknada", Amount: "0.10"}}
 	r.LateDelivery = true
-	r.SpecialPurpose = "x"
 	r.BuyerOIB = "12345678903"
 	return req
 }
