@@ -30,8 +30,6 @@ func TestStampDefinitions(t *testing.T) {
 // GOBL docs can show it.
 func TestExtensionUsage(t *testing.T) {
 	want := map[cbc.Key]string{
-		fiskal.ExtKeyPremises:      bill.ShortSchemaTax,
-		fiskal.ExtKeyDevice:        bill.ShortSchemaTax,
 		fiskal.ExtKeySequenceScope: bill.ShortSchemaTax,
 		fiskal.ExtKeyPaperNumber:   bill.ShortSchemaTax,
 		fiskal.ExtKeyPP:            tax.ShortSchemaCombo,
@@ -45,5 +43,24 @@ func TestExtensionUsage(t *testing.T) {
 			assert.Equal(t, []cbc.Key{fiskal.V1}, def.Usage.Keys)
 			assert.Equal(t, []string{schema}, def.Usage.Schemas)
 		})
+	}
+}
+
+// TestIdentityDefinitions checks that the addon declares the supplier
+// identities it reads, with the pattern its rules check, and that their keys
+// are no longer extensions.
+func TestIdentityDefinitions(t *testing.T) {
+	ad := tax.AddonForKey(fiskal.V1)
+	require.NotNil(t, ad)
+	patterns := map[cbc.Key]string{}
+	for _, def := range ad.Identities {
+		patterns[def.Key] = def.Pattern
+	}
+	assert.Equal(t, map[cbc.Key]string{
+		fiskal.IdentityKeyPremises: `^[0-9a-zA-Z]{1,20}$`,
+		fiskal.IdentityKeyDevice:   `^[1-9][0-9]{0,19}$`,
+	}, patterns)
+	for key := range patterns {
+		assert.Nil(t, tax.ExtensionForKey(key), "%s is an extension too", key)
 	}
 }

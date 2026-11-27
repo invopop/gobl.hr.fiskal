@@ -4,9 +4,10 @@
 // addon/fiskal) and be valid: the addon's rules check the fields the Invoice
 // takes, so the conversion does not check their format again. The Invoice
 // takes the issuer's OIB, the issue date and time, the number with the
-// business premises and device labels, the numbering scope, whether the
-// issuer is registered for VAT, the VAT breakdown, the total, the payment method, the operator's OIB, the
-// paper invoice number and the buyer's OIB from the invoice. An invoice in
+// business premises and device labels (identities of the supplier), the
+// numbering scope, whether the issuer is registered for VAT, the VAT
+// breakdown, the total, the payment method, the operator's OIB, the paper
+// invoice number and the buyer's OIB from the invoice. An invoice in
 // another currency is converted to euros first, with its exchange rate.
 
 package racun
@@ -171,13 +172,13 @@ func issueTime(inv *bill.Invoice) cal.DateTime {
 }
 
 // number is the invoice number: the GOBL invoice code, which the addon
-// requires to be the bare sequential number, and the business premises and
-// device labels.
+// requires to be the bare sequential number, and the labels of the business
+// premises and device, the supplier's identities.
 func number(inv *bill.Invoice) *Number {
 	return &Number{
 		Sequential: inv.Code.String(),
-		Premises:   inv.Tax.Ext.Get(fiskal.ExtKeyPremises).String(),
-		Device:     inv.Tax.Ext.Get(fiskal.ExtKeyDevice).String(),
+		Premises:   fiskal.Premises(inv.Supplier).String(),
+		Device:     fiskal.Device(inv.Supplier).String(),
 	}
 }
 

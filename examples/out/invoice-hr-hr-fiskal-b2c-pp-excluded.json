@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "f8a9d9b30282273606f8fb454408c2baade908a397cde6caa3741700b8183092"
+			"val": "037e1b8cce204915871ab25ffbeca3a4d3b234a99c1944be3b7a4b6b9e94bb23"
 		}
 	},
 	"doc": {
@@ -23,8 +23,6 @@
 		"tax": {
 			"prices_include": "VAT",
 			"ext": {
-				"hr-fiskal-device": "1",
-				"hr-fiskal-premises": "SHOP1",
 				"hr-fiskal-sequence-scope": "P"
 			}
 		},
@@ -34,6 +32,16 @@
 				"country": "HR",
 				"code": "80432461483"
 			},
+			"identities": [
+				{
+					"key": "hr-fiskal-premises",
+					"code": "SHOP1"
+				},
+				{
+					"key": "hr-fiskal-device",
+					"code": "1"
+				}
+			],
 			"people": [
 				{
 					"key": "operator",

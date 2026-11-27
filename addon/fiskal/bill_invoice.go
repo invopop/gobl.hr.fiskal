@@ -57,7 +57,7 @@ func normalizeInvoice(inv *bill.Invoice) {
 		inv.Tax.Ext = inv.Tax.Ext.Set(ExtKeySequenceScope, SequencePremises)
 	}
 	if inv.Series == cbc.CodeEmpty {
-		inv.Series = Series(inv.Tax.Ext)
+		inv.Series = Series(inv)
 	}
 	removeIncludedPP(inv)
 }
@@ -80,31 +80,6 @@ func normalizeCode(code cbc.Code) cbc.Code {
 		return cbc.Code(t)
 	}
 	return code
-}
-
-// Series provides the invoice series that matches the numbering scope: the
-// business premises label for scope P, such as "SHOP1", or the premises and
-// device labels for scope N, such as "SHOP1/1". It is empty without the
-// labels.
-//
-// An invoice counter belongs to one series. When Invopop numbers the
-// invoices, its sequence service keeps one counter for each supplier tax ID
-// and series, so this series gives one counter for each business premises,
-// or for each device, as the numbering scope requires. A till that numbers its
-// own invoices can leave the series empty.
-func Series(ext tax.Extensions) cbc.Code {
-	premises := ext.Get(ExtKeyPremises)
-	if premises == cbc.CodeEmpty {
-		return cbc.CodeEmpty
-	}
-	if ext.Get(ExtKeySequenceScope) != SequenceDevice {
-		return premises
-	}
-	device := ext.Get(ExtKeyDevice)
-	if device == cbc.CodeEmpty {
-		return cbc.CodeEmpty
-	}
-	return premises + "/" + device
 }
 
 // -- Rule set -------------------------------------------------------------
@@ -153,15 +128,6 @@ func billInvoiceRules() *rules.Set {
 		// The normalizer always sets the invoice tax, so it needs no rule.
 		rules.Field("tax",
 			rules.Field("ext",
-				rules.Assert("05", fmt.Sprintf("invoice tax ext requires the business premises (%s) and device (%s) labels (BrRac)", ExtKeyPremises, ExtKeyDevice),
-					tax.ExtensionsRequire(ExtKeyPremises, ExtKeyDevice),
-				),
-				rules.Assert("06", fmt.Sprintf("invoice tax ext %s must be up to 20 letters and digits (OznPosPr)", ExtKeyPremises),
-					tax.ExtensionHasValidCode(ExtKeyPremises),
-				),
-				rules.Assert("07", fmt.Sprintf("invoice tax ext %s must be up to 20 digits with no leading zero (OznNapUr)", ExtKeyDevice),
-					tax.ExtensionHasValidCode(ExtKeyDevice),
-				),
 				rules.Assert("08", fmt.Sprintf("invoice tax ext %s must be P or N (OznSlijed)", ExtKeySequenceScope),
 					tax.ExtensionHasValidCode(ExtKeySequenceScope),
 				),
@@ -171,6 +137,27 @@ func billInvoiceRules() *rules.Set {
 			),
 		),
 		rules.Field("supplier",
+			rules.Assert("05", fmt.Sprintf("invoice supplier requires exactly one identity with the key %s and one with the key %s: the labels of the business premises and the device that issued the invoice (BrRac)", IdentityKeyPremises, IdentityKeyDevice),
+				is.Func("has one premises and one device", hasOnePremisesAndOneDevice),
+			),
+			rules.Field("identities",
+				rules.Each(
+					rules.When(org.IdentityKeyIn(IdentityKeyPremises),
+						rules.Field("code",
+							rules.Assert("06", fmt.Sprintf("invoice supplier identity %s must be up to 20 letters and digits (OznPosPr)", IdentityKeyPremises),
+								is.MatchesRegexp(premisesRegexp),
+							),
+						),
+					),
+					rules.When(org.IdentityKeyIn(IdentityKeyDevice),
+						rules.Field("code",
+							rules.Assert("07", fmt.Sprintf("invoice supplier identity %s must be up to 20 digits with no leading zero (OznNapUr)", IdentityKeyDevice),
+								is.MatchesRegexp(deviceRegexp),
+							),
+						),
+					),
+				),
+			),
 			rules.Field("tax_id",
 				rules.Assert("11", "invoice supplier tax ID is required, with country HR and the supplier's OIB (Oib)", is.Present),
 				rules.Field("country",
@@ -488,10 +475,10 @@ func partyHasCroatianTaxID(val any) bool {
 
 func seriesMatchesScope(val any) bool {
 	inv, ok := val.(*bill.Invoice)
-	if !ok || inv == nil || inv.Tax == nil || inv.Series == cbc.CodeEmpty {
+	if !ok || inv == nil || inv.Series == cbc.CodeEmpty {
 		return true
 	}
-	return inv.Series == Series(inv.Tax.Ext)
+	return inv.Series == Series(inv)
 }
 
 func hasPaymentMethod(val any) bool {

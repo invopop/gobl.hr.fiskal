@@ -40,6 +40,16 @@
 		"ext": {
 			"hr-fiskal-vat-status": "registered"
 		},
+		"identities": [
+			{
+				"code": "SHOP1",
+				"key": "hr-fiskal-premises"
+			},
+			{
+				"code": "1",
+				"key": "hr-fiskal-device"
+			}
+		],
 		"name": "Invopop d.o.o.",
 		"people": [
 			{
@@ -59,12 +69,6 @@
 		"tax_id": {
 			"code": "80432461483",
 			"country": "HR"
-		}
-	},
-	"tax": {
-		"ext": {
-			"hr-fiskal-device": "1",
-			"hr-fiskal-premises": "SHOP1"
 		}
 	},
 	"type": "standard",

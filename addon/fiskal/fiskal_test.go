@@ -30,16 +30,15 @@ func testInvoice() *bill.Invoice {
 		Currency:  "EUR",
 		IssueDate: cal.MakeDate(2026, 11, 6),
 		IssueTime: cal.NewTime(13, 58, 10),
-		Tax: &bill.Tax{
-			Ext: tax.ExtensionsOf(cbc.CodeMap{
-				fiskal.ExtKeyPremises: "SHOP1",
-				fiskal.ExtKeyDevice:   "1",
-			}),
-		},
+		Tax:       new(bill.Tax),
 		Supplier: &org.Party{
 			Name:  "Invopop d.o.o.",
 			TaxID: &tax.Identity{Country: "HR", Code: supplierOIB},
-			Ext:   tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyVATStatus: fiskal.VATStatusRegistered}),
+			Identities: []*org.Identity{
+				{Key: fiskal.IdentityKeyPremises, Code: "SHOP1"},
+				{Key: fiskal.IdentityKeyDevice, Code: "1"},
+			},
+			Ext: tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeyVATStatus: fiskal.VATStatusRegistered}),
 			People: []*org.Person{
 				{
 					Key:        fiskal.PersonKeyOperator,
@@ -86,7 +85,8 @@ func TestInvoiceValid(t *testing.T) {
 	assert.Equal(t, fiskal.SequencePremises, inv.Tax.Ext.Get(fiskal.ExtKeySequenceScope))
 	assert.True(t, fiskal.RegisteredForVAT(inv.Supplier))
 	assert.Equal(t, cbc.Code(supplierOIB), fiskal.PartyOIB(inv.Supplier))
-	assert.Empty(t, inv.Supplier.Identities)
+	assert.Equal(t, cbc.Code("SHOP1"), fiskal.Premises(inv.Supplier))
+	assert.Equal(t, cbc.Code("1"), fiskal.Device(inv.Supplier))
 	assert.Empty(t, inv.Tax.Notes)
 }
 
@@ -181,11 +181,23 @@ func TestInvoiceRules(t *testing.T) {
 		{"code with a series letter", func(inv *bill.Invoice) { inv.Code = "A1" }, "01"},
 		{"code with only zeros", func(inv *bill.Invoice) { inv.Code = "000" }, "01"},
 		{"padded code with a series letter", func(inv *bill.Invoice) { inv.Code = "A0001" }, "01"},
-		{"no premises", func(inv *bill.Invoice) { inv.Tax.Ext = inv.Tax.Ext.Delete(fiskal.ExtKeyPremises) }, "05"},
-		{"no device", func(inv *bill.Invoice) { inv.Tax.Ext = inv.Tax.Ext.Delete(fiskal.ExtKeyDevice) }, "05"},
-		{"premises with a dash", func(inv *bill.Invoice) { inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeyPremises, "POS-1") }, "06"},
-		{"device with letters", func(inv *bill.Invoice) { inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeyDevice, "T1") }, "07"},
-		{"device with a leading zero", func(inv *bill.Invoice) { inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeyDevice, "01") }, "07"},
+		{"no premises", func(inv *bill.Invoice) { inv.Supplier.Identities = inv.Supplier.Identities[1:] }, "05"},
+		{"no device", func(inv *bill.Invoice) { inv.Supplier.Identities = inv.Supplier.Identities[:1] }, "05"},
+		{"no identities", func(inv *bill.Invoice) { inv.Supplier.Identities = nil }, "05"},
+		{"two premises", func(inv *bill.Invoice) {
+			inv.Supplier.Identities = append(inv.Supplier.Identities, &org.Identity{Key: fiskal.IdentityKeyPremises, Code: "SHOP2"})
+		}, "05"},
+		{"two devices", func(inv *bill.Invoice) {
+			inv.Supplier.Identities = append(inv.Supplier.Identities, &org.Identity{Key: fiskal.IdentityKeyDevice, Code: "2"})
+		}, "05"},
+		{"labels as invoice tax extensions", func(inv *bill.Invoice) {
+			inv.Supplier.Identities = nil
+			inv.Tax = &bill.Tax{Ext: tax.ExtensionsOf(cbc.CodeMap{"hr-fiskal-premises": "SHOP1", "hr-fiskal-device": "1"})}
+		}, "05"},
+		{"premises with a dash", func(inv *bill.Invoice) { inv.Supplier.Identities[0].Code = "POS-1" }, "06"},
+		{"premises longer than 20 characters", func(inv *bill.Invoice) { inv.Supplier.Identities[0].Code = "SHOP12345678901234567" }, "06"},
+		{"device with letters", func(inv *bill.Invoice) { inv.Supplier.Identities[1].Code = "T1" }, "07"},
+		{"device with a leading zero", func(inv *bill.Invoice) { inv.Supplier.Identities[1].Code = "01" }, "07"},
 		{"another currency without an exchange rate", func(inv *bill.Invoice) { inv.Currency = "USD" }, "03"},
 		{"unknown sequence scope", func(inv *bill.Invoice) { inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeySequenceScope, "X") }, "08"},
 		{"foreign supplier", func(inv *bill.Invoice) {
@@ -194,7 +206,7 @@ func TestInvoiceRules(t *testing.T) {
 		{"supplier tax ID without its OIB", func(inv *bill.Invoice) { inv.Supplier.TaxID.Code = "" }, "13"},
 		{"supplier tax ID without its OIB, with an OIB identity", func(inv *bill.Invoice) {
 			inv.Supplier.TaxID.Code = ""
-			inv.Supplier.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: supplierOIB}}
+			inv.Supplier.Identities = append(inv.Supplier.Identities, &org.Identity{Type: hr.IdentityTypeOIB, Code: supplierOIB})
 		}, "13"},
 		{"supplier with no tax ID", func(inv *bill.Invoice) { inv.Supplier.TaxID = nil }, "11"},
 		{"supplier without its VAT status", func(inv *bill.Invoice) { inv.Supplier.Ext = inv.Supplier.Ext.Delete(fiskal.ExtKeyVATStatus) }, "30"},
@@ -336,13 +348,20 @@ func TestNumbering(t *testing.T) {
 }
 
 func TestSeries(t *testing.T) {
-	ext := func(m cbc.CodeMap) tax.Extensions { return tax.ExtensionsOf(m) }
-	assert.Equal(t, cbc.Code("SHOP1"), fiskal.Series(ext(cbc.CodeMap{fiskal.ExtKeyPremises: "SHOP1", fiskal.ExtKeyDevice: "2"})))
-	assert.Equal(t, cbc.Code("SHOP1/2"), fiskal.Series(ext(cbc.CodeMap{
-		fiskal.ExtKeyPremises: "SHOP1", fiskal.ExtKeyDevice: "2", fiskal.ExtKeySequenceScope: fiskal.SequenceDevice,
-	})))
-	assert.Empty(t, fiskal.Series(ext(cbc.CodeMap{fiskal.ExtKeyDevice: "2"})))
-	assert.Empty(t, fiskal.Series(ext(cbc.CodeMap{fiskal.ExtKeyPremises: "SHOP1", fiskal.ExtKeySequenceScope: fiskal.SequenceDevice})))
+	invoice := func(scope cbc.Code, ids ...*org.Identity) *bill.Invoice {
+		return &bill.Invoice{
+			Tax:      &bill.Tax{Ext: tax.ExtensionsOf(cbc.CodeMap{fiskal.ExtKeySequenceScope: scope})},
+			Supplier: &org.Party{Identities: ids},
+		}
+	}
+	premises := &org.Identity{Key: fiskal.IdentityKeyPremises, Code: "SHOP1"}
+	device := &org.Identity{Key: fiskal.IdentityKeyDevice, Code: "2"}
+	assert.Equal(t, cbc.Code("SHOP1"), fiskal.Series(invoice(fiskal.SequencePremises, premises, device)))
+	assert.Equal(t, cbc.Code("SHOP1/2"), fiskal.Series(invoice(fiskal.SequenceDevice, premises, device)))
+	assert.Empty(t, fiskal.Series(invoice(fiskal.SequencePremises, device)))
+	assert.Empty(t, fiskal.Series(invoice(fiskal.SequenceDevice, premises)))
+	assert.Empty(t, fiskal.Series(invoice(fiskal.SequencePremises, premises, premises, device)))
+	assert.Empty(t, fiskal.Series(nil))
 }
 
 func TestRounding(t *testing.T) {
@@ -525,7 +544,7 @@ func TestSupplierOIBIdentityIgnored(t *testing.T) {
 	inv := testInvoice()
 	notRegistered(inv)
 	inv.Lines[0].Taxes[0] = &tax.Combo{Category: tax.CategoryVAT, Key: tax.KeyExempt}
-	inv.Supplier.Identities = []*org.Identity{{Type: hr.IdentityTypeOIB, Code: "12345678903"}}
+	inv.Supplier.Identities = append(inv.Supplier.Identities, &org.Identity{Type: hr.IdentityTypeOIB, Code: "12345678903"})
 	require.NoError(t, inv.Calculate())
 	require.NoError(t, rules.Validate(inv))
 	assert.Equal(t, cbc.Code(supplierOIB), fiskal.PartyOIB(inv.Supplier))

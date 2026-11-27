@@ -4,7 +4,7 @@
 		"uuid": "8a51fd30-2a27-11ee-be56-0242ac120002",
 		"dig": {
 			"alg": "sha256",
-			"val": "f9af18dbce68e881c447b36db6a61abfa7bbd05f842765520bc8aca830b7d88a"
+			"val": "94060b656dcb88924571f3ee6100b1d37d257934249d6a6db1d2a58ecbd75c32"
 		}
 	},
 	"doc": {
@@ -22,8 +22,6 @@
 		"currency": "EUR",
 		"tax": {
 			"ext": {
-				"hr-fiskal-device": "1",
-				"hr-fiskal-premises": "SHOP1",
 				"hr-fiskal-sequence-scope": "P"
 			},
 			"notes": [
@@ -40,6 +38,16 @@
 				"country": "HR",
 				"code": "80432461483"
 			},
+			"identities": [
+				{
+					"key": "hr-fiskal-premises",
+					"code": "SHOP1"
+				},
+				{
+					"key": "hr-fiskal-device",
+					"code": "1"
+				}
+			],
 			"people": [
 				{
 					"key": "operator",

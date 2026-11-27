@@ -62,10 +62,13 @@ func newAddon() *tax.AddonDef {
 
 				The invoice number has three parts: the invoice code, which must be
 				the bare sequential number, the business premises label and the
-				device label. Set the labels, as registered in ePorezna, in the
-				hr-fiskal-premises and hr-fiskal-device extensions of the invoice tax.
-				The numbering scope (hr-fiskal-sequence-scope) is per business
-				premises unless set to N, per device.
+				device label. The premises and the device identify where the
+				supplier sells, so each is an identity of the supplier: one with
+				the key hr-fiskal-premises, whose code is the premises label
+				registered in ePorezna, such as "SHOP1", and one with the key
+				hr-fiskal-device, whose code is the device label, such as "1".
+				The numbering scope (hr-fiskal-sequence-scope, in the invoice tax)
+				is per business premises unless set to N, per device.
 
 				The invoice can arrive with its number, from a till that numbers its
 				own invoices, or without a code, for Invopop to number it. The series
@@ -162,6 +165,7 @@ func newAddon() *tax.AddonDef {
 			},
 		},
 		Extensions: extensions,
+		Identities: identities,
 		Stamps:     stamps,
 		Scenarios:  []*tax.ScenarioSet{invoiceScenarios},
 	}
