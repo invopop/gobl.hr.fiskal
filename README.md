@@ -288,10 +288,9 @@ each field.
 The schema also has elements this example leaves out: consumption tax
 (`Pnp`), other taxes (`OstaliPor`), the VAT-exempt amount (`IznosOslobPdv`),
 the margin-scheme amount (`IznosMarza`), the amount not subject to tax
-(`IznosNePodlOpor`), fees (`Naknade`), the number of an invoice from the
-bound paper invoice book, issued while the device was down (`ParagonBrRac`),
-a field the Tax Administration reserves (`SpecNamj`) and the buyer's OIB
-(`OibPrimateljaRacuna`), given only when the buyer is a business.
+(`IznosNePodlOpor`), fees (`Naknade`), a field the Tax Administration
+reserves (`SpecNamj`) and the buyer's OIB (`OibPrimateljaRacuna`), given
+only when the buyer is a business.
 
 CIS answers with `RacunOdgovor`. When it accepts the invoice, the answer holds
 the JIR (`Jir`, the unique invoice identifier); when it refuses it, the answer
