@@ -10,16 +10,17 @@ code: "1002"
 issue_date: "2026-11-06"
 issue_time: "13:58:10"
 currency: "EUR"
-tax:
-  ext:
-    hr-fiskal-premises: "SHOP1"
-    hr-fiskal-device: "1"
 
 supplier:
   name: "Obrt Kava"
   tax_id:
     country: "HR"
     code: "80432461483"
+  identities:
+    - key: hr-fiskal-premises
+      code: "SHOP1"
+    - key: hr-fiskal-device
+      code: "1"
   ext:
     hr-fiskal-vat-status: "not-registered"
   people:

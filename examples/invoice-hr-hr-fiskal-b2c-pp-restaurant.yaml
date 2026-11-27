@@ -17,15 +17,17 @@ issue_time: "20:27:53"
 currency: "EUR"
 tax:
   prices_include: VAT
-  ext:
-    hr-fiskal-premises: "SHOP1"
-    hr-fiskal-device: "1"
 
 supplier:
   name: "Invopop d.o.o."
   tax_id:
     country: "HR"
     code: "80432461483"
+  identities:
+    - key: hr-fiskal-premises
+      code: "SHOP1"
+    - key: hr-fiskal-device
+      code: "1"
   ext:
     hr-fiskal-vat-status: "registered"
   people:

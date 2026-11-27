@@ -13,14 +13,6 @@ import (
 // ExtKeyPP, which is set on a tax combo, and ExtKeyVATStatus, which is set
 // on the supplier. Each definition's Usage says so.
 const (
-	// ExtKeyPremises is the business premises label registered in
-	// ePorezna (OznPosPr).
-	ExtKeyPremises cbc.Key = "hr-fiskal-premises"
-
-	// ExtKeyDevice is the label of the device, such as a till, that issued
-	// the invoice (OznNapUr).
-	ExtKeyDevice cbc.Key = "hr-fiskal-device"
-
 	// ExtKeySequenceScope says what the invoice numbers count within
 	// (OznSlijed).
 	ExtKeySequenceScope cbc.Key = "hr-fiskal-sequence-scope"
@@ -75,37 +67,6 @@ func usageIn(schema string) *cbc.Usage {
 }
 
 var extensions = []*cbc.Definition{
-	{
-		Key:   ExtKeyPremises,
-		Usage: usageIn(bill.ShortSchemaTax),
-		Name: i18n.String{
-			i18n.EN: "Croatia Fiskal: Business Premises",
-			i18n.HR: "Hrvatska fiskalizacija: Oznaka poslovnog prostora",
-		},
-		Desc: i18n.String{
-			i18n.EN: here.Doc(`
-				Label of the business premises the invoice is issued in, as
-				registered in ePorezna: up to 20 letters and digits (OznPosPr).
-			`),
-		},
-		Pattern: `^[0-9a-zA-Z]{1,20}$`,
-	},
-	{
-		Key:   ExtKeyDevice,
-		Usage: usageIn(bill.ShortSchemaTax),
-		Name: i18n.String{
-			i18n.EN: "Croatia Fiskal: Device",
-			i18n.HR: "Hrvatska fiskalizacija: Oznaka naplatnog uređaja",
-		},
-		Desc: i18n.String{
-			i18n.EN: here.Doc(`
-				Label of the device, such as a till, that issued the invoice: up to
-				20 digits with no leading zero, unique within the business premises
-				(OznNapUr).
-			`),
-		},
-		Pattern: `^[1-9][0-9]{0,19}$`,
-	},
 	{
 		Key:   ExtKeySequenceScope,
 		Usage: usageIn(bill.ShortSchemaTax),

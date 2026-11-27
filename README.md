@@ -27,8 +27,9 @@ lives in [gobl.hr.eracun](https://github.com/invopop/gobl.hr.eracun).
 
 - `addon/fiskal/` — the GOBL addon `hr-fiskal-b2c-v1` for invoices
   fiscalized at the time of the sale: the business premises and device
-  labels, the numbering scope and the paper invoice number as extensions of
-  the invoice tax, the supplier's VAT status as an extension of the supplier,
+  labels as identities of the supplier, the numbering scope and the paper
+  invoice number as extensions of the invoice tax, the supplier's VAT status
+  as an extension of the supplier,
   the operator as a supplier person (as in
   `hr-eracun-v1`), and the rules CIS needs met. It also defines the stamps of
   a fiscalized invoice: `fiskal-zki`, `fiskal-jir` and `fiskal-qr`.
@@ -65,14 +66,39 @@ with `Client.Fiscalize`, and add the stamps with `racun.AddStamps`.
 > **Note**: `hr-fiskal-b2c-v1` is not yet in GOBL core's approved
 > external-addon registry. It is added there once this module is released.
 
+## Business premises and device
+
+The business premises and the device (such as a till) that issue an invoice
+say where the supplier sells, as a SIRET identifies an establishment of a
+French company. Each is an identity of the supplier, with the addon's key:
+
+| Identity key | Code |
+| --- | --- |
+| `hr-fiskal-premises` | Business premises label registered in ePorezna (`OznPosPr`): up to 20 letters and digits. Required. |
+| `hr-fiskal-device` | Label of the device that issued the invoice (`OznNapUr`): up to 20 digits with no leading zero, unique within the premises. For a self-service device, the number the Tax Administration gave it. Required. |
+
+```yaml
+supplier:
+  tax_id:
+    country: "HR"
+    code: "80432461483"
+  identities:
+    - key: hr-fiskal-premises
+      code: "SHOP1"
+    - key: hr-fiskal-device
+      code: "1"
+```
+
+The supplier must have exactly one identity with each key. A supplier stored
+with the identities of all its premises and devices must keep only the ones
+of the sale on each invoice: no identity is taken in place of another.
+
 ## Extensions
 
 The `hr-fiskal-b2c-v1` addon sets these on the invoice tax:
 
 | Key | Description |
 | --- | --- |
-| `hr-fiskal-premises` | Business premises label registered in ePorezna (`OznPosPr`): up to 20 letters and digits. Required. |
-| `hr-fiskal-device` | Label of the device that issued the invoice (`OznNapUr`): up to 20 digits with no leading zero. Required. |
 | `hr-fiskal-sequence-scope` | What the invoice numbers count within (`OznSlijed`): `P` per business premises (the default) or `N` per device. |
 | `hr-fiskal-paper-number` | Number of an invoice from the bound paper invoice book, entered after the till broke down (`ParagonBrRac`): up to 100 characters. Such an invoice is sent late. |
 
@@ -82,11 +108,12 @@ leading zero. A printed invoice shows the number as
 
 The number can come from two places:
 
-- **A till that numbers its own invoices** sends the code with the labels.
+- **A till that numbers its own invoices** sends the code with the premises
+  and device identities.
 - **Invopop numbers the invoice.** The invoice arrives without a code, and the
   sequence step of the workflow gives it one. That step keeps one counter for
   each supplier tax ID and series, so the addon sets the series from the
-  labels: the premises label for scope `P` (`SHOP1`), or `<premises>/<device>`
+  identities: the premises label for scope `P` (`SHOP1`), or `<premises>/<device>`
   for scope `N` (`SHOP1/1`). CIS refuses leading zeros, so the addon removes them from a
   code made only of digits: the step's default padding of six digits gives
   `000042`, which becomes `42`. The step must not add a prefix or a suffix,

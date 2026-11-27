@@ -5,10 +5,13 @@
 	"issue_date": "2026-11-06",
 	"issue_time": "14:05:00",
 	"currency": "EUR",
-	"tax": { "ext": { "hr-fiskal-premises": "SHOP1", "hr-fiskal-device": "1" } },
 	"supplier": {
 		"name": "Invopop d.o.o.",
 		"tax_id": { "country": "HR", "code": "80432461483" },
+		"identities": [
+			{ "key": "hr-fiskal-premises", "code": "SHOP1" },
+			{ "key": "hr-fiskal-device", "code": "1" }
+		],
 		"ext": { "hr-fiskal-vat-status": "registered" },
 		"people": [
 			{
