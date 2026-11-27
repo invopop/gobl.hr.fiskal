@@ -5,9 +5,10 @@
 // takes, so the conversion does not check their format again. The Invoice
 // takes the issuer's OIB, the issue date and time, the number with the
 // business premises and device labels, the numbering scope, whether the
-// issuer is registered for VAT, the VAT breakdown, the total, the payment method, the operator's OIB, the
-// paper invoice number and the buyer's OIB from the invoice. An invoice in
-// another currency is converted to euros first, with its exchange rate.
+// issuer is registered for VAT, the VAT breakdown, the total, the payment
+// method, the operator's OIB and the buyer's OIB from the invoice. An
+// invoice in another currency is converted to euros first, with its
+// exchange rate.
 
 package racun
 
@@ -97,8 +98,6 @@ func FromInvoice(inv *bill.Invoice, key crypto.Signer) (*Invoice, error) {
 	r.Total = amount(inv.Totals.Payable)
 	r.PaymentMethod = paymentMethod(inv.Payment)
 	r.OperatorOIB = operatorOIB(inv)
-	r.HandwrittenNumber = ext.Get(fiskal.ExtKeyPaperNumber).String()
-	r.LateDelivery = r.HandwrittenNumber != ""
 	// CIS refuses a buyer's OIB on an invoice paid by bank transfer (error
 	// 181, §2.1.5).
 	if r.PaymentMethod != PaymentTransfer {

@@ -111,9 +111,6 @@ func newAddon() *tax.AddonDef {
 				(povratna naknada), is a charge without taxes. CIS receives it by
 				its name, the charge's reason, and its amount.
 
-				An invoice from the bound paper invoice book, entered after the till
-				broke down, carries its paper number in hr-fiskal-paper-number.
-
 				CIS receives the amounts in euros. An invoice in another currency
 				must give an exchange rate to EUR, and is converted with it when
 				it is fiscalized. Its printed invoice must also show the amounts

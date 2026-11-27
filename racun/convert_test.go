@@ -255,16 +255,13 @@ func TestExemptCents(t *testing.T) {
 func TestAddonExtensions(t *testing.T) {
 	key := testKey(t)
 	inv := loadExample(t, "cash-prices-include-vat.json").Extract().(*bill.Invoice)
-	inv.Tax.Ext = inv.Tax.Ext.
-		Set(fiskal.ExtKeySequenceScope, fiskal.SequenceDevice).
-		Set(fiskal.ExtKeyPaperNumber, "123/458/5")
+	inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeySequenceScope, fiskal.SequenceDevice)
 	notRegistered(inv)
 	r, err := FromInvoice(inv, key)
 	require.NoError(t, err)
 	assert.Equal(t, SequenceDevice, r.SequenceScope)
 	assert.False(t, r.InVATSystem)
-	assert.Equal(t, "123/458/5", r.HandwrittenNumber)
-	assert.True(t, r.LateDelivery, "an invoice from the paper book is always late")
+	assert.False(t, r.LateDelivery, "a new invoice is not late")
 }
 
 // A small taxpayer is exempt from VAT (Art. 90(1) of the VAT Act), so its

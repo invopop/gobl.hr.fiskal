@@ -33,7 +33,6 @@ func TestExtensionUsage(t *testing.T) {
 		fiskal.ExtKeyPremises:      bill.ShortSchemaTax,
 		fiskal.ExtKeyDevice:        bill.ShortSchemaTax,
 		fiskal.ExtKeySequenceScope: bill.ShortSchemaTax,
-		fiskal.ExtKeyPaperNumber:   bill.ShortSchemaTax,
 		fiskal.ExtKeyPP:            tax.ShortSchemaCombo,
 		fiskal.ExtKeyVATStatus:     org.ShortSchemaParty,
 	}

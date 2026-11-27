@@ -94,9 +94,9 @@ type Invoice struct {
 	// ZKI is the issuer's protection code (ZastKod), from ZKI.
 	ZKI string `xml:"ZastKod"`
 	// LateDelivery is true when the invoice was issued earlier without a
-	// JIR and is sent again (NakDost). FromInvoice sets it for an invoice
-	// from the paper invoice book; set it before sending again an invoice
-	// that got no JIR. It is not in the ZKI, so the ZKI does not change.
+	// JIR and is sent again (NakDost). Set it before sending again an
+	// invoice that got no JIR. It is not in the ZKI, so the ZKI does not
+	// change.
 	LateDelivery bool `xml:"NakDost"`
 	// HandwrittenNumber is the number of an invoice from the bound paper
 	// invoice book, re-entered after the till broke down (ParagonBrRac).
