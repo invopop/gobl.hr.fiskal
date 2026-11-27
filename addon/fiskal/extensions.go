@@ -25,10 +25,6 @@ const (
 	// (OznSlijed).
 	ExtKeySequenceScope cbc.Key = "hr-fiskal-sequence-scope"
 
-	// ExtKeyPaperNumber is the number of an invoice from the bound paper
-	// invoice book, entered after the till broke down (ParagonBrRac).
-	ExtKeyPaperNumber cbc.Key = "hr-fiskal-paper-number"
-
 	// ExtKeyPP says whether the price of a line includes its consumption
 	// tax (PP).
 	ExtKeyPP cbc.Key = "hr-fiskal-pp"
@@ -129,22 +125,6 @@ var extensions = []*cbc.Definition{
 				i18n.HR: "Na razini naplatnog uređaja",
 			}},
 		},
-	},
-	{
-		Key:   ExtKeyPaperNumber,
-		Usage: usageIn(bill.ShortSchemaTax),
-		Name: i18n.String{
-			i18n.EN: "Croatia Fiskal: Paper Invoice Number",
-			i18n.HR: "Hrvatska fiskalizacija: Broj računa iz uvezane knjige računa",
-		},
-		Desc: i18n.String{
-			i18n.EN: here.Doc(`
-				Number of an invoice issued from the bound paper invoice book while
-				the till was broken, when it is entered and fiscalized later (up to
-				100 characters, ParagonBrRac). Such an invoice is always sent late.
-			`),
-		},
-		Pattern: `^.{1,100}$`,
 	},
 	{
 		Key:   ExtKeyPP,

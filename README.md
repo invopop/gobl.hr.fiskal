@@ -27,11 +27,11 @@ lives in [gobl.hr.eracun](https://github.com/invopop/gobl.hr.eracun).
 
 - `addon/fiskal/` — the GOBL addon `hr-fiskal-b2c-v1` for invoices
   fiscalized at the time of the sale: the business premises and device
-  labels, the numbering scope and the paper invoice number as extensions of
-  the invoice tax, the supplier's VAT status as an extension of the supplier,
-  the operator as a supplier person (as in
-  `hr-eracun-v1`), and the rules CIS needs met. It also defines the stamps of
-  a fiscalized invoice: `fiskal-zki`, `fiskal-jir` and `fiskal-qr`.
+  labels and the numbering scope as extensions of the invoice tax, the
+  supplier's VAT status as an extension of the supplier, the operator as a
+  supplier person (as in `hr-eracun-v1`), and the rules CIS needs met. It
+  also defines the stamps of a fiscalized invoice: `fiskal-zki`,
+  `fiskal-jir` and `fiskal-qr`.
 - `racun/` — invoice fiscalization: builds the invoice request
   (`RacunZahtjev`) from a GOBL invoice with the `hr-fiskal-b2c-v1` addon,
   computes its ZKI (the issuer's protection code), signs it with XML-DSig,
@@ -74,7 +74,6 @@ The `hr-fiskal-b2c-v1` addon sets these on the invoice tax:
 | `hr-fiskal-premises` | Business premises label registered in ePorezna (`OznPosPr`): up to 20 letters and digits. Required. |
 | `hr-fiskal-device` | Label of the device that issued the invoice (`OznNapUr`): up to 20 digits with no leading zero. Required. |
 | `hr-fiskal-sequence-scope` | What the invoice numbers count within (`OznSlijed`): `P` per business premises (the default) or `N` per device. |
-| `hr-fiskal-paper-number` | Number of an invoice from the bound paper invoice book, entered after the till broke down (`ParagonBrRac`): up to 100 characters. Such an invoice is sent late. |
 
 The invoice code is the bare sequential number (`BrOznRac`): digits with no
 leading zero. A printed invoice shows the number as
@@ -289,9 +288,7 @@ each field.
 The schema also has elements this example leaves out: consumption tax
 (`Pnp`), other taxes (`OstaliPor`), the VAT-exempt amount (`IznosOslobPdv`),
 the margin-scheme amount (`IznosMarza`), the amount not subject to tax
-(`IznosNePodlOpor`), fees (`Naknade`), the number of an invoice from the
-bound paper invoice book, issued while the device was down (`ParagonBrRac`),
-a field the Tax Administration reserves (`SpecNamj`) and the buyer's OIB
+(`IznosNePodlOpor`), fees (`Naknade`) and the buyer's OIB
 (`OibPrimateljaRacuna`), given only when the buyer is a business.
 
 CIS answers with `RacunOdgovor`. When it accepts the invoice, the answer holds

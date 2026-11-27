@@ -56,7 +56,7 @@ func TestInvoiceRequestXML(t *testing.T) {
 		assertInOrder(t, string(out),
 			"<Pdv>", "<Pnp>", "<OstaliPor><Porez><Naziv>", "<IznosOslobPdv>", "<IznosMarza>", "<IznosNePodlOpor>",
 			"<Naknade><Naknada><NazivN>", "<IznosUkupno>", "<NacinPlac>", "<OibOper>", "<ZastKod>",
-			"<NakDost>true", "<ParagonBrRac>", "<SpecNamj>", "<OibPrimateljaRacuna>",
+			"<NakDost>true", "<OibPrimateljaRacuna>",
 		)
 
 		back := new(InvoiceRequest)

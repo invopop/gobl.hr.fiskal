@@ -94,15 +94,10 @@ type Invoice struct {
 	// ZKI is the issuer's protection code (ZastKod), from ZKI.
 	ZKI string `xml:"ZastKod"`
 	// LateDelivery is true when the invoice was issued earlier without a
-	// JIR and is sent again (NakDost). FromInvoice sets it for an invoice
-	// from the paper invoice book; set it before sending again an invoice
-	// that got no JIR. It is not in the ZKI, so the ZKI does not change.
+	// JIR and is sent again (NakDost). Set it before sending again an
+	// invoice that got no JIR. It is not in the ZKI, so the ZKI does not
+	// change.
 	LateDelivery bool `xml:"NakDost"`
-	// HandwrittenNumber is the number of an invoice from the bound paper
-	// invoice book, re-entered after the till broke down (ParagonBrRac).
-	HandwrittenNumber string `xml:"ParagonBrRac,omitempty"`
-	// SpecialPurpose is reserved by the Tax Administration (SpecNamj).
-	SpecialPurpose string `xml:"SpecNamj,omitempty"`
 	// BuyerOIB is only for invoices to businesses paid in cash or by card
 	// (OibPrimateljaRacuna).
 	BuyerOIB string `xml:"OibPrimateljaRacuna,omitempty"`
@@ -114,43 +109,39 @@ type Invoice struct {
 func (r *Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	// The fields are those of Invoice, in the same order.
 	out := struct {
-		IssuerOIB         string        `xml:"Oib"`
-		InVATSystem       bool          `xml:"USustPdv"`
-		IssuedAt          string        `xml:"DatVrijeme"`
-		SequenceScope     SequenceScope `xml:"OznSlijed"`
-		Number            *Number       `xml:"BrRac"`
-		VAT               *taxList      `xml:"Pdv,omitempty"`
-		ConsumptionTax    *taxList      `xml:"Pnp,omitempty"`
-		OtherTaxes        *otherTaxList `xml:"OstaliPor,omitempty"`
-		VATExemptAmount   string        `xml:"IznosOslobPdv,omitempty"`
-		MarginAmount      string        `xml:"IznosMarza,omitempty"`
-		NotSubjectAmount  string        `xml:"IznosNePodlOpor,omitempty"`
-		Fees              *feeList      `xml:"Naknade,omitempty"`
-		Total             string        `xml:"IznosUkupno"`
-		PaymentMethod     PaymentMethod `xml:"NacinPlac"`
-		OperatorOIB       string        `xml:"OibOper"`
-		ZKI               string        `xml:"ZastKod"`
-		LateDelivery      bool          `xml:"NakDost"`
-		HandwrittenNumber string        `xml:"ParagonBrRac,omitempty"`
-		SpecialPurpose    string        `xml:"SpecNamj,omitempty"`
-		BuyerOIB          string        `xml:"OibPrimateljaRacuna,omitempty"`
+		IssuerOIB        string        `xml:"Oib"`
+		InVATSystem      bool          `xml:"USustPdv"`
+		IssuedAt         string        `xml:"DatVrijeme"`
+		SequenceScope    SequenceScope `xml:"OznSlijed"`
+		Number           *Number       `xml:"BrRac"`
+		VAT              *taxList      `xml:"Pdv,omitempty"`
+		ConsumptionTax   *taxList      `xml:"Pnp,omitempty"`
+		OtherTaxes       *otherTaxList `xml:"OstaliPor,omitempty"`
+		VATExemptAmount  string        `xml:"IznosOslobPdv,omitempty"`
+		MarginAmount     string        `xml:"IznosMarza,omitempty"`
+		NotSubjectAmount string        `xml:"IznosNePodlOpor,omitempty"`
+		Fees             *feeList      `xml:"Naknade,omitempty"`
+		Total            string        `xml:"IznosUkupno"`
+		PaymentMethod    PaymentMethod `xml:"NacinPlac"`
+		OperatorOIB      string        `xml:"OibOper"`
+		ZKI              string        `xml:"ZastKod"`
+		LateDelivery     bool          `xml:"NakDost"`
+		BuyerOIB         string        `xml:"OibPrimateljaRacuna,omitempty"`
 	}{
-		IssuerOIB:         r.IssuerOIB,
-		InVATSystem:       r.InVATSystem,
-		IssuedAt:          r.IssuedAt,
-		SequenceScope:     r.SequenceScope,
-		Number:            r.Number,
-		VATExemptAmount:   r.VATExemptAmount,
-		MarginAmount:      r.MarginAmount,
-		NotSubjectAmount:  r.NotSubjectAmount,
-		Total:             r.Total,
-		PaymentMethod:     r.PaymentMethod,
-		OperatorOIB:       r.OperatorOIB,
-		ZKI:               r.ZKI,
-		LateDelivery:      r.LateDelivery,
-		HandwrittenNumber: r.HandwrittenNumber,
-		SpecialPurpose:    r.SpecialPurpose,
-		BuyerOIB:          r.BuyerOIB,
+		IssuerOIB:        r.IssuerOIB,
+		InVATSystem:      r.InVATSystem,
+		IssuedAt:         r.IssuedAt,
+		SequenceScope:    r.SequenceScope,
+		Number:           r.Number,
+		VATExemptAmount:  r.VATExemptAmount,
+		MarginAmount:     r.MarginAmount,
+		NotSubjectAmount: r.NotSubjectAmount,
+		Total:            r.Total,
+		PaymentMethod:    r.PaymentMethod,
+		OperatorOIB:      r.OperatorOIB,
+		ZKI:              r.ZKI,
+		LateDelivery:     r.LateDelivery,
+		BuyerOIB:         r.BuyerOIB,
 	}
 	if len(r.VAT) > 0 {
 		out.VAT = &taxList{r.VAT}

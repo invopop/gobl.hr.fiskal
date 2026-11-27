@@ -283,13 +283,6 @@ func TestInvoiceRules(t *testing.T) {
 		require.NoError(t, inv.Calculate())
 		require.NoError(t, rules.Validate(inv))
 	})
-
-	t.Run("paper number", func(t *testing.T) {
-		inv := testInvoice()
-		inv.Tax.Ext = inv.Tax.Ext.Set(fiskal.ExtKeyPaperNumber, "123/458/5")
-		require.NoError(t, inv.Calculate())
-		require.NoError(t, rules.Validate(inv))
-	})
 }
 
 // TestNumbering covers both ways an invoice gets its number: a till that
